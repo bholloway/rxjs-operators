@@ -36,7 +36,7 @@ You may either:
  * import the whole package to get a hash `object` of all Subjects, or;
  * import subjects individually from `/cold`.
 
-## API
+## Reference
 
 All Subjects may observe only a single source which must be specified at construction.
 
@@ -79,7 +79,7 @@ Exposes a `refCount` Observable which tracks the number of subscriptions to the 
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete or the Subject is **disposed**.
 
-Alternatively consider the [`takeUntil()` operator](http://reactivex.io/documentation/operators/takeuntil.html). This Subject is more convenient in the case where where you want to terminate by simple function call, rather than an observable.
+This Subject introduces a complete that will cause following operators in the observable chain to also complete, and any disposal lifecycle hooks (i.e. `.using()`) will fire. There is some duplication with the [`takeUntil()` operator](http://reactivex.io/documentation/operators/takeuntil.html) which you should consider as an alternative. This Subject is more convenient in the case where where you want to terminate by simple function call, rather than an observable.
 
 `cold.disposableSubject(observable, [scheduler])`
 
@@ -89,6 +89,6 @@ A factory for the Subject.
 * @param `[scheduler] : Scheduler` Optional scheduler for internal use
 * @returns `:Observable` An observable with additional `dispose()` method and `isComplete:boolean` field
 
-Exposes a `dispose()` method which causes the Subject to complete if it has not already done so. Exposes an `isDisposed` flag which indicates if the Subject has completed.
+Exposes a `dispose()` method which causes the Subject to complete if it has not already done so. Exposes an `isDisposed` flag which indicates whether the Subject has completed.
 
 ![cold.disposableSubject](cold/disposable-subject.png)

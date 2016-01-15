@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Selected RxJS Subjects that operate cold",
   "main": "index.js",
+  "scripts": {
+    "test": "node ./node_modules/jasmine-node/lib/jasmine-node/cli.js --test-dir ./cold --verbose"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bholloway/rx-cold-subjects.git"
@@ -21,5 +24,9 @@
   },
   "homepage": "https://github.com/bholloway/rx-cold-subjects",
   "dependencies": {
+    "rxjs": "^5.0.0-beta.1"
+  },
+  "devDependencies": {
+    "jasmine-node": "^1.14.5"
   }
 }

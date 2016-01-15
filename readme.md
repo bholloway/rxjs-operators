@@ -44,14 +44,14 @@ All Subjects may observe only a single source which must be specified at constru
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive the **last (or initial) value** and all subsequent notifications, unless or until the source Observable is complete.
 
-`cold.behaviorSubject(observable, [initialValue], [scheduler])`
+**`cold.behaviorSubject(observable, [initialValue], [scheduler])`**
 
 A factory for the Subject.
 
-* @param `observable : Observable` The source observable
-* @param `[initialValue] : *` Optional value to use when invalid (defaults to `undefined`)
-* @param `[scheduler] : Scheduler` Optional scheduler for internal use
-* @returns `:Observable` An observable with additional `clear()` method and `isValid:boolean` field
+* **@param** `observable : Observable` The source observable
+* **@param** `[initialValue] : *` Optional value to use when invalid (defaults to `undefined`)
+* **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
+* **@returns** `:Observable` An observable with additional `clear()` method and `isValid:boolean` field
 
 Exposes a `clear()` method that will re-instate the `initialValue`.
 
@@ -63,13 +63,13 @@ Exposes an `isValid` flag which negates any time the current value is the `initi
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
 
-`cold.refCountSubject(observable, [scheduler])`
+**`cold.refCountSubject(observable, [scheduler])`**
 
 A factory for the Subject.
 
-* @param `observable : Observable` The source observable
-* @param `[scheduler] : Scheduler` Optional scheduler for internal use
-* @returns `:Observable` An observable with an additional `refCount:Observable` field
+* **@param** `observable : Observable` The source observable
+* **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
+* **@returns** `:Observable` An observable with an additional `refCount:Observable` field
 
 Exposes a `refCount` Observable which tracks the number of subscriptions to the Subject proper. It will complete when the source `observable` completes and it is a [Behaviour](http://www.introtorx.com/Content/v1.0.10621.0/02_KeyTypes.html#BehaviorSubject) in that all new subscriptions will immediately receive the current reference-count as their first value, unless or until the source `observable` is complete.
 
@@ -81,13 +81,13 @@ Represents a value that changes over time. Observers can subscribe to the subjec
 
 This Subject introduces a complete that will cause following operators in the observable chain to also complete, and any disposal lifecycle hooks (i.e. `.using()`) will fire. There is some duplication with the [`takeUntil()` operator](http://reactivex.io/documentation/operators/takeuntil.html) which you should consider as an alternative. This Subject is more convenient in the case where where you want to terminate by simple function call, rather than an observable.
 
-`cold.disposableSubject(observable, [scheduler])`
+**`cold.disposableSubject(observable, [scheduler])`**
 
 A factory for the Subject.
 
-* @param `observable : Observable` The source observable
-* @param `[scheduler] : Scheduler` Optional scheduler for internal use
-* @returns `:Observable` An observable with additional `dispose()` method and `isComplete:boolean` field
+* **@param** `observable : Observable` The source observable
+* **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
+* **@returns** `:Observable` An observable with additional `dispose()` method and `isComplete:boolean` field
 
 Exposes a `dispose()` method which causes the Subject to complete if it has not already done so. Exposes an `isDisposed` flag which indicates whether the Subject has completed.
 

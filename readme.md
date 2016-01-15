@@ -89,6 +89,8 @@ A factory for the Subject.
 * **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
 * **@returns** `:Observable` An observable with additional `dispose()` method and `isComplete:boolean` field
 
-Exposes a `dispose()` method which causes the Subject to complete if it has not already done so. Exposes an `isDisposed` flag which indicates whether the Subject has completed.
+Exposes a `dispose()` method which causes the Subject to complete if it has not already done so.
+
+Exposes an `isDisposed` flag which indicates whether the Subject has completed.
 
 ![cold.disposableSubject](cold/disposable-subject.png)

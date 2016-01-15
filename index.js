@@ -4,9 +4,7 @@
  */
 
 module.exports = {
-  cold: {
-    behaviorSubject  : require('./cold/behavior-subject'),
-    disposableSubject: require('./cold/disposable-subject'),
-    refCountSubject  : require('./cold/ref-count-subject')
-  }
+  behavior  : require('./operator/behavior'),
+  disposable: require('./operator/disposable'),
+  refCount  : require('./operator/lifecycle')
 };

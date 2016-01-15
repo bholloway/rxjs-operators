@@ -7,12 +7,36 @@
  * operator which you should consider as an alternative. This Subject is more convenient in the case where where you
  * want to terminate by simple function call, rather than an observable.
  *
- * @param observable The source observable
  * @param [scheduler] Optional scheduler for internal use
  * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
  */
-function disposableSubject(observable, scheduler) {
+function disposableOperator(scheduler) {
+  var isDisposed,
+      deferred = {
+        promise: {
+          then: function (handler) {
+            resolve = handler;
+          }
+        },
+        resolve: null
+      };
 
+  return Object.defineProperties(this.takeUntil(deferred.promise), {
+    dispose      : {value: dispose},
+    getIsDisposed: {value: getIsDisposed},
+    isDisposed   : {get: getIsDisposed}
+  });
+
+  function dispose() {
+    if (!isDisposed) {
+      isDisposed = true;
+      deferred.resolve();
+    }
+  }
+
+  function getIsDisposed() {
+    return isDisposed;
+  }
 }
 
-module.exports = disposableSubject;
+module.exports = disposableOperator;

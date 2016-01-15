@@ -1,14 +1,14 @@
 {
-  "name": "rx-cold-subjects",
+  "name": "rx-operator-toolbox",
   "version": "0.0.1",
-  "description": "Selected RxJS Subjects that operate cold",
+  "description": "A library of select custom operators for RxJS",
   "main": "index.js",
   "scripts": {
     "test": "node ./node_modules/jasmine-node/lib/jasmine-node/cli.js --test-dir ./cold --verbose"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bholloway/rx-cold-subjects.git"
+    "url": "git+https://github.com/bholloway/rx-operator.git"
   },
   "keywords": [
     "reactive",
@@ -20,13 +20,13 @@
   "author": "bholloway",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/bholloway/rx-cold-subjects/issues"
+    "url": "https://github.com/bholloway/rx-operator/issues"
   },
-  "homepage": "https://github.com/bholloway/rx-cold-subjects",
+  "homepage": "https://github.com/bholloway/rx-operator",
   "dependencies": {
-    "rxjs": "^5.0.0-beta.1"
   },
   "devDependencies": {
-    "jasmine-node": "^1.14.5"
+    "jasmine-node": "^1.14.5",
+    "rxjs": "^5.0.0-beta.1"
   }
 }

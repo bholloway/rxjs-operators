@@ -1,0 +1,25 @@
+{
+  "name": "rx-cold-subjects",
+  "version": "0.0.1",
+  "description": "Selected RxJS Subjects that operate cold",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bholloway/rx-cold-subjects.git"
+  },
+  "keywords": [
+    "reactive",
+    "rx",
+    "RxJS",
+    "cold",
+    "subject"
+  ],
+  "author": "bholloway",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bholloway/rx-cold-subjects/issues"
+  },
+  "homepage": "https://github.com/bholloway/rx-cold-subjects",
+  "dependencies": {
+  }
+}

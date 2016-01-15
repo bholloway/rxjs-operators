@@ -11,17 +11,20 @@
  * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
  */
 function disposableOperator(scheduler) {
-  var isDisposed,
-      deferred = {
-        promise: {
-          then: function (handler) {
-            resolve = handler;
-          }
-        },
-        resolve: null
-      };
 
-  return Object.defineProperties(this.takeUntil(deferred.promise), {
+  // force completion on disposal
+  var isDisposed,
+      disposeObserver,
+      disposeObs = Rx.Observable.create(function (observer) {
+        disposeObserver = observer;
+      });
+
+  var result = this
+    .do(undefined, undefined, dispose)
+    .takeUntil(disposeObs);
+
+  // composition
+  return Object.defineProperties(result, {
     dispose      : {value: dispose},
     getIsDisposed: {value: getIsDisposed},
     isDisposed   : {get: getIsDisposed}
@@ -30,7 +33,11 @@ function disposableOperator(scheduler) {
   function dispose() {
     if (!isDisposed) {
       isDisposed = true;
-      deferred.resolve();
+      disposeObserver.next();
+      disposeObserver.complete();
+
+      disposeObserver = disposeObs = null;
+      result = null;
     }
   }
 

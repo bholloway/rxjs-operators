@@ -1,4 +1,3 @@
-
 var behaviorOperator = require('./behavior-operator');
 
 /**
@@ -10,26 +9,35 @@ var behaviorOperator = require('./behavior-operator');
  * @returns {Observable} An observable with additional `lifecycle:Observable` field
  */
 function lifecycleOperator(scheduler) {
+  var isDisposed;
 
   // reference-count lifecycle observable
   var countObserver,
-      count = Rx.Observable.create(function (observer) {
-          countObserver = observer;
-          return function dispose() {
-            countObserver = null;
-          };
-        })
-        .takeUntil(this.last());
-
-  var lifecycle = behaviorOperator.call(count, 0);
+      countObs         = Rx.Observable.create(function (observer) {
+        countObserver = observer;
+      }),
+      countBehaviorObs = behaviorOperator.call(countObs, 0);
 
   // publish single observable for all subscribers
-  var result = hookSubscribe(this.publish().refCount());
+  var result = this
+    .do(undefined, undefined, dispose)
+    .publish()
+    .refCount();
 
   // composition
-  return Object.defineProperties(result, {
-    lifecycle: {value: lifecycle}
+  return Object.defineProperties(hookSubscribe(result), {
+    lifecycle: {value: countBehaviorObs}
   });
+
+  function dispose() {
+    if (!isDisposed) {
+      isDisposed = true;
+      countObserver.complete();
+
+      countObserver = countObs = countBehaviorObs = null;
+      result = null;
+    }
+  }
 
   function hookSubscribe(connectableObs) {
     var _subscribe = connectableObs._subscribe;
@@ -43,7 +51,7 @@ function lifecycleOperator(scheduler) {
       var _unsubscribe = subscription._unsubscribe;
 
       subscription._unsubscribe = function unsubscribe() {
-        _unsubscribe.call(connectableObs);
+        _unsubscribe.call(subscription);
         if (countObserver) {
           countObserver.next(countable.refCount - 1);
         }

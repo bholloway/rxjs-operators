@@ -7,11 +7,11 @@
  * @returns {Observable} An observable with additional `clear()` method and `isValid:boolean` field
  */
 function behaviorOperator(initialValue, scheduler) {
+  var currentValue,
+      isDisposed;
 
   // shared by all subscribers
-  var currentValue,
-      isDisposed,
-      sourceObs = this.do(store, undefined, dispose);
+  var sourceObs = this.do(store, undefined, dispose);
 
   var clearObserver,
       clearObs = Rx.Observable.create(function (observer) {
@@ -48,7 +48,11 @@ function behaviorOperator(initialValue, scheduler) {
       isDisposed = true;
       currentValue = null;
       clearObserver.complete();
-      clearObserver = null;
+
+      sourceObs = null;
+      clearObserver = clearObs = null;
+      sharedObs = null;
+      result = null;
     }
   }
 

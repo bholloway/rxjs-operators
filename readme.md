@@ -18,7 +18,7 @@ mySourceObservable.subscribe(mySubject);  // compose the system
 
 Using the subscribe effectively makes a 'hot' system. Even if the source observable was cold, the `subscribe()` will cause it to begin emitting as soon as the system is composed.
 
-Alternatively we could try the `do()` method because. For example:
+The experienced reader may ask why we couldn't use the `do()` method instead. For example:
 
 ```
 var mySourceObservable = ...       // some source
@@ -26,9 +26,9 @@ var mySubject = ...                // some subject
 mySourceObservable.do(mySubject);  // compose the system
 ```
 
-However this system is passive with respect to the source. If the source happens to start then the Subject will receive input but subscribing to the Subject will not cause the source Observable to start.
+In this case this system is passive with respect to the source. If the source happens to start then the Subject will receive input but subscribing to the Subject will not cause the source Observable to start. This arrangement may work in certain cases but is not the genuine 'cold' behavior we are looking for.
 
-This library contains implementations of some selected Subjects which are genuinely 'cold'. However they differ from the classical implementation as their source observable needs to be specified at construction.
+This library contains implementations of some selected Subjects which are genuinely 'cold'. Their limitation is that they source from a single Observable which needs to be specified at time of construction.
 
 ## Usage
 
@@ -38,7 +38,7 @@ You may either:
 
 ## API
 
-All Subjects may observe only a single source which must be specified at construction. However unlike classing Subjects the systems they compose will operate ['cold'](http://reactivex.io/documentation/observable.html).
+All Subjects may observe only a single source which must be specified at construction.
 
 ### Behavior Subject
 

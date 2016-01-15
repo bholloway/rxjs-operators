@@ -59,7 +59,7 @@ Exposes an `isValid` flag which negates any time the current value is the `initi
 
 ![cold.behaviorSubject](cold/behavior-subject.png)
 
-### Reference-Counting Subject
+### Reference Counting Subject
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
 

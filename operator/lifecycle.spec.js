@@ -1,4 +1,4 @@
-describe('behaviour-subject', function () {
+describe('behaviour', function () {
 
 
 

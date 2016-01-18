@@ -1,4 +1,4 @@
-var behaviorOperator = require('./behavior-operator');
+var behaviorOperator = require('./behavior');
 
 /**
  * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent

@@ -1,4 +1,4 @@
-describe('ref-count-subject', function () {
+describe('ref-count', function () {
 
 
 

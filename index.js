@@ -4,7 +4,13 @@
  */
 
 module.exports = {
-  behavior  : require('./operator/behavior'),
-  disposable: require('./operator/disposable'),
-  refCount  : require('./operator/lifecycle')
+  utilty  : {
+    subclassWith: require('./utility/subclass-with')
+  },
+  operator: {
+    behavior    : require('./operator/behavior'),
+    disposable  : require('./operator/disposable'),
+    lifecycle   : require('./operator/lifecycle'),
+    toObservable: require('./operator/to-observable')
+  }
 };

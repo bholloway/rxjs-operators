@@ -1,54 +1,68 @@
-# Rx Cold Subjects
+# Rx Operators
 
-[![NPM](https://nodei.co/npm/rx-cold-subjects.png)](http://github.com/bholloway/rx-cold-subjects)
+[![NPM](https://nodei.co/npm/rx-operators.png)](http://github.com/bholloway/rx-operators)
 
-Selected RxJS Subjects that operate cold
-
-## Rationale
-
-Per [Dave Sexton's guide](http://davesexton.com/blog/post/To-Use-Subject-Or-Not-To-Use-Subject.aspx) you should only use a Subject if you want a ['hot' observable](http://reactivex.io/documentation/observable.html).
-
-This is because the way you input data to the Subject is using the `subscribe()` method. For example:
-
-```
-var mySourceObservable = ...              // some source
-var mySubject = ...                       // some subject
-mySourceObservable.subscribe(mySubject);  // compose the system
-```
-
-Using the subscribe effectively makes a 'hot' system. Even if the source observable was cold, the `subscribe()` will cause it to begin emitting as soon as the system is composed.
-
-The experienced reader may ask why we couldn't use the `do()` method instead. For example:
-
-```
-var mySourceObservable = ...       // some source
-var mySubject = ...                // some subject
-mySourceObservable.do(mySubject);  // compose the system
-```
-
-In this case this system is passive with respect to the source. If the source happens to start then the Subject will receive input but subscribing to the Subject will not cause the source Observable to start. This arrangement may work in certain cases but is not the genuine 'cold' behavior we are looking for.
-
-This library contains implementations of some selected Subjects which are genuinely 'cold'. Their limitation is that they source from a single Observable which needs to be specified at time of construction.
+A library of operators for RxJS
 
 ## Usage
 
+In all cases this library does **not add operators to Observable**. You need to do extra work to create an Observable with these operators.
+
 You may either:
- * import the whole package to get a hash `object` of all Subjects, or;
- * import subjects individually from `/cold`.
+ * Use the whole package to get a hash `object` of all `rxOperators.operator.*` and `rxOperators.utility.*`.
+ * Import individual operators from `/operator` and/or utilities from `/utility`.
+
+The operators are simply`function` that expect `this` to be `Observable` If they were contained within RxJS then they would be prototype functions on `Observable`.
+
+To use the operators you should either:
+
+ * Create your own `Observable` implementation using `utility.subclassWith(operators)`.
+ * Use any of the [options listed in the documentation](https://github.com/ReactiveX/RxJS/blob/master/doc/operator-creation.md#adding-the-operator-to-observable).
+
+Note that the author considers it poor practice to monkey patch `Observable.prototype` per Option 3 as it creates a global namespace in which it will be [easy to conflict with other libraries](https://github.com/ReactiveX/RxJS/issues/1207#issue-127133307). However you may find it useful to do this for operator `toObservable()` otherwise you will have to duplicate all of the `Observable` static methods.
+
+For example:
+
+Import everthing
+```
+var rxOperators  = require('rx-operators');
+var MyObservable = rxOperators.utility.subclassWith({
+  disposable: MyObservable.operators.disposable
+});
+Operator.prototype.toObservable = rxOperators.rxOperators;
+```
+
+or import selectively
+```
+var subclassWith = require('rx-operators/utility/subclass-with');
+var MyObservable = subclassWith({
+  disposable: require('rx-operators/operators/disposable')
+});
+Operator.prototype.toObservable = require('rx-operators/utility/to-observable');
+```
+
+then use
+```
+var observable = Observable.create(...)
+  .toObservable(MyObservable)
+  .disposable();
+...
+observable.dispose()
+```
 
 ## Reference
 
-All Subjects may observe only a single source which must be specified at construction.
+### `utility.subclassWith(operators) : Class`
 
-### Behavior Subject
+Create a subclass of `Rx.Operator` that includes the given operators.
+
+* **@param** `operators : object` A hash of operator functions
+* **@returns** `:Class` A subclass that includes the given operators
+
+### `operator.behavior([initialValue], [scheduler]) : Observable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive the **last (or initial) value** and all subsequent notifications, unless or until the source Observable is complete.
 
-**`cold.behaviorSubject(observable, [initialValue], [scheduler])`**
-
-A factory for the Subject.
-
-* **@param** `observable : Observable` The source observable
 * **@param** `[initialValue] : *` Optional value to use when invalid (defaults to `undefined`)
 * **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
 * **@returns** `:Observable` An observable with additional `clear()` method and `isValid:boolean` field
@@ -57,40 +71,34 @@ Exposes a `clear()` method that will re-instate the `initialValue`.
 
 Exposes an `isValid` flag which negates any time the current value is the `initialValue` (by strict equality).
 
-![cold.behaviorSubject](cold/behavior-subject.png)
+![operator.behavior](operator/behavior.png)
 
-### Reference Counting Subject
+### `operator.lifecycle([scheduler])`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
 
-**`cold.refCountSubject(observable, [scheduler])`**
-
-A factory for the Subject.
-
-* **@param** `observable : Observable` The source observable
 * **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
-* **@returns** `:Observable` An observable with an additional `refCount:Observable` field
+* **@returns** `:Observable` An observable with an additional `lifecycle:Observable` field
 
-Exposes a `refCount` Observable which tracks the number of subscriptions to the Subject proper. It will complete when the source `observable` completes and it is a [Behaviour](http://www.introtorx.com/Content/v1.0.10621.0/02_KeyTypes.html#BehaviorSubject) in that all new subscriptions will immediately receive the current reference-count as their first value, unless or until the source `observable` is complete.
+Exposes a `lifecycle` Observable which tracks the number of subscriptions to the Subject proper. It will complete when the source `Observable` completes and it is a behavior (see above) in that all new subscriptions will immediately receive the current reference count as their first value, unless or until the source `observable` is complete.
 
-![cold.refCountSubject](cold/ref-count-subject.png)
+![operator.lifecycle](operator/lifecycle.png)
 
-### Disposable Subject
+### `operator.disposable([scheduler])`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete or the Subject is **disposed**.
 
-This Subject introduces a complete that will cause following operators in the observable chain to also complete, and any disposal lifecycle hooks (i.e. `.using()`) will fire. There is some duplication with the [`takeUntil()` operator](http://reactivex.io/documentation/operators/takeuntil.html) which you should consider as an alternative. This Subject is more convenient in the case where where you want to terminate by simple function call, rather than an observable.
+This operator introduces a `complete` that will all down-stream observables to also complete and any disposal lifecycle hooks (i.e. `.using()`) to therefore fire.
 
-**`cold.disposableSubject(observable, [scheduler])`**
-
-A factory for the Subject.
-
-* **@param** `observable : Observable` The source observable
 * **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
 * **@returns** `:Observable` An observable with additional `dispose()` method and `isComplete:boolean` field
 
-Exposes a `dispose()` method which causes the Subject to complete if it has not already done so.
+Exposes a `dispose()` method which causes the Subject to `complete` if it has not already done so.
 
 Exposes an `isDisposed` flag which indicates whether the Subject has completed.
 
-![cold.disposableSubject](cold/disposable-subject.png)
+![cold.disposableSubject](operator/disposable.png)
+
+There is some duplication with the [`takeUntil()` operator](http://reactivex.io/documentation/operators/takeuntil.html) which you should consider as an alternative.
+
+This operator is more convenient in the case where where you want to terminate by simple function call, rather than an observable. If you find you are iterating over observables and calling `.dispose()` then you should compose with `.takeUntil(kill)` and a single `kill:Observable` instead.

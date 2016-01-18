@@ -1,4 +1,4 @@
-describe('disposable-subject', function () {
+describe('disposable', function () {
 
 
 

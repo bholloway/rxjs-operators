@@ -2,9 +2,9 @@
 
 var Observable = require('rxjs').Observable;
 
-var behaviorOperator     = require('./behavior'),
-    toObservableOperator = require('./to-observable'),
-    hookSubscribe        = require('../utility/hook-subscribe');
+var behavior      = require('./behavior'),
+    toObservable  = require('./to-observable'),
+    hookSubscribe = require('../utility/hook-subscribe');
 
 /**
  * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
@@ -15,7 +15,7 @@ var behaviorOperator     = require('./behavior'),
  * @param [scheduler] Optional scheduler for internal use
  * @returns {Observable} An observable with additional `lifecycle:Observable` field
  */
-function lifecycleOperator(scheduler) {
+function lifecycle(scheduler) {
   /* jshint validthis:true */
   var isDisposed;
 
@@ -23,9 +23,9 @@ function lifecycleOperator(scheduler) {
   var countObserver,
       countObs         = Observable.create(function (observer) {
         countObserver = observer;
-      }),
-      countBehaviorObs = behaviorOperator.call(countObs, 0),
-      countCastObs     = toObservableOperator.call(countBehaviorObs, this.constructor);
+      }, scheduler),
+      countBehaviorObs = behavior.call(countObs, 0),
+      countCastObs     = toObservable.call(countBehaviorObs, this.constructor);
 
   // publish single observable for all subscribers
   var result = this
@@ -58,4 +58,4 @@ function lifecycleOperator(scheduler) {
   }
 }
 
-module.exports = lifecycleOperator;
+module.exports = lifecycle;

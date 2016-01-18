@@ -15,7 +15,7 @@ var Observable = require('rxjs').Observable;
  * @param [scheduler] Optional scheduler for internal use
  * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
  */
-function disposableOperator(scheduler) {
+function disposable(scheduler) {
   /* jshint validthis:true */
 
   // force completion on disposal
@@ -23,7 +23,7 @@ function disposableOperator(scheduler) {
       disposeObserver,
       disposeObs = Observable.create(function (observer) {
         disposeObserver = observer;
-      });
+      }, scheduler);
 
   var result = this
     .do(undefined, undefined, dispose)
@@ -52,4 +52,4 @@ function disposableOperator(scheduler) {
   }
 }
 
-module.exports = disposableOperator;
+module.exports = disposable;

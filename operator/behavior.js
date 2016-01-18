@@ -2,7 +2,7 @@
 
 var Observable = require('rxjs').Observable;
 
-var toObservableOperator = require('./to-observable');
+var toObservable = require('./to-observable');
 
 /**
  * Represents a value that changes over time. Observers can subscribe to the subject to receive the last (or initial)
@@ -10,10 +10,9 @@ var toObservableOperator = require('./to-observable');
  *
  * @this {Observable}
  * @param {*} [initialValue] Optional value to use when invalid (defaults to `undefined`)
- * @param {Scheduler} [scheduler] Optional scheduler for internal use
  * @returns {Observable} An observable with additional `clear()` method and `isValid:boolean` field
  */
-function behaviorOperator(initialValue, scheduler) {
+function behavior(initialValue) {
   /* jshint validthis:true */
   var currentValue,
       isDisposed;
@@ -36,7 +35,7 @@ function behaviorOperator(initialValue, scheduler) {
   });
 
   // ensure the result is the correct type
-  var castResult = toObservableOperator.call(result, this.constructor);
+  var castResult = toObservable.call(result, this.constructor);
 
   // composition
   return Object.defineProperties(castResult, {
@@ -73,4 +72,4 @@ function behaviorOperator(initialValue, scheduler) {
   }
 }
 
-module.exports = behaviorOperator;
+module.exports = behavior;

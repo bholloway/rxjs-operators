@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Represents a value that changes over time. Observers can subscribe to the subject to receive the last (or initial)
  * value and all subsequent notifications, unless or until the source Observable is complete.

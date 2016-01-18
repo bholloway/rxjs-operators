@@ -1,3 +1,5 @@
+'use strict';
+
 var behaviorOperator = require('./behavior');
 
 /**
@@ -9,6 +11,7 @@ var behaviorOperator = require('./behavior');
  * @returns {Observable} An observable with additional `lifecycle:Observable` field
  */
 function lifecycleOperator(scheduler) {
+  /* jshint: validthis */
   var isDisposed;
 
   // reference-count lifecycle observable

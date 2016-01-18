@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Transform the current Observable to an Observable with a different class implementation.
  *
@@ -5,7 +7,8 @@
  * @returns An instance of the given class
  */
 function toObservableOperator(subclass) {
-  throw new Error('todo')
+  /* jshint: validthis */
+  return subclass.lift.call(this, this.operator);
 }
 
 module.exports = toObservableOperator;

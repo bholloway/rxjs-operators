@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
  * notifications, unless or until the source Observable is complete or the Subject is disposed.
@@ -11,6 +13,7 @@
  * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
  */
 function disposableOperator(scheduler) {
+  /* jshint: validthis */
 
   // force completion on disposal
   var isDisposed,

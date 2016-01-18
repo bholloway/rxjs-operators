@@ -1,3 +1,5 @@
+'use strict';
+
 var Operator = require('rxjs').Operator;
 
 /**
@@ -12,6 +14,7 @@ function subclassWith(operators) {
 
   Subclass.prototype = Object.create(Operator);
   Subclass.prototype.constructor = Operator;
+  Subclass.prototype.lift = lift;
 
   for (var key in operators) {
     if (operators.hasOwnProperty(key)) {
@@ -20,6 +23,14 @@ function subclassWith(operators) {
   }
 
   return Subclass;
+
+  function lift(operator) {
+    /* jshint: validthis */
+    var observable = new Subclass();
+    observable.source = this;
+    observable.operator = operator;
+    return observable;
+  }
 }
 
 module.exports = subclassWith;

@@ -105,7 +105,7 @@ Exposes a `lifecycle` Observable which tracks the number of subscriptions to the
 
 ### `operator.toObservable(Subclass) : Observable`
 
-Transform the current Observable to an Observable with a different class implementation.
+Transform the current Observable to an Observable with a different class implementation. Where it is already of the same `constructor` then the current instance is returned unchanged.
 
 * **@param** `Subclass : Class` A subclass of `Observable` to cast the observable to
 * **@returns** `:Observable` An instance of the given class

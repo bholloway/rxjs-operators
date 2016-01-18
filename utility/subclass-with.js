@@ -25,7 +25,7 @@ function subclassWith(operators) {
   return Subclass;
 
   function lift(operator) {
-    /* jshint: validthis */
+    /* jshint validthis:true */
     var observable = new Subclass();
     observable.source = this;
     observable.operator = operator;

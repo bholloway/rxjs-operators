@@ -1,5 +1,7 @@
 'use strict';
 
+var Observable = require('rxjs').Observable;
+
 /**
  * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
  * notifications, unless or until the source Observable is complete or the Subject is disposed.
@@ -9,16 +11,17 @@
  * operator which you should consider as an alternative. This Subject is more convenient in the case where where you
  * want to terminate by simple function call, rather than an observable.
  *
+ * @this {Observable}
  * @param [scheduler] Optional scheduler for internal use
  * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
  */
 function disposableOperator(scheduler) {
-  /* jshint: validthis */
+  /* jshint validthis:true */
 
   // force completion on disposal
   var isDisposed,
       disposeObserver,
-      disposeObs = Rx.Observable.create(function (observer) {
+      disposeObs = Observable.create(function (observer) {
         disposeObserver = observer;
       });
 

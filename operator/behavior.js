@@ -1,14 +1,20 @@
 'use strict';
 
+var Observable = require('rxjs').Observable;
+
+var toObservableOperator = require('./to-observable');
+
 /**
  * Represents a value that changes over time. Observers can subscribe to the subject to receive the last (or initial)
  * value and all subsequent notifications, unless or until the source Observable is complete.
  *
+ * @this {Observable}
  * @param {*} [initialValue] Optional value to use when invalid (defaults to `undefined`)
  * @param {Scheduler} [scheduler] Optional scheduler for internal use
  * @returns {Observable} An observable with additional `clear()` method and `isValid:boolean` field
  */
 function behaviorOperator(initialValue, scheduler) {
+  /* jshint validthis:true */
   var currentValue,
       isDisposed;
 
@@ -16,21 +22,24 @@ function behaviorOperator(initialValue, scheduler) {
   var sourceObs = this.do(store, undefined, dispose);
 
   var clearObserver,
-      clearObs = Rx.Observable.create(function (observer) {
+      clearObs = Observable.create(function (observer) {
         clearObserver = observer;
       });
 
-  var sharedObs = Rx.Observable.merge(sourceObs, clearObs);
+  var sharedObs = Observable.merge(sourceObs, clearObs);
 
   // factory an observable for each subscriber
-  var result = Rx.Observable.defer(function () {
+  var result = Observable.defer(function () {
     return isDisposed ?
-      Rx.Observable.empty() :
-      Rx.Observable.merge(Rx.Observable.of(currentValue || initialValue), sharedObs);
+      Observable.empty() :
+      Observable.merge(Observable.of(currentValue || initialValue), sharedObs);
   });
 
+  // ensure the result is the correct type
+  var castResult = toObservableOperator.call(result, this.constructor);
+
   // composition
-  return Object.defineProperties(result, {
+  return Object.defineProperties(castResult, {
     clear     : {value: clear},
     getIsValid: {value: getIsValid},
     isValid   : {get: getIsValid}
@@ -55,6 +64,7 @@ function behaviorOperator(initialValue, scheduler) {
       clearObserver = clearObs = null;
       sharedObs = null;
       result = null;
+      castResult = null;
     }
   }
 

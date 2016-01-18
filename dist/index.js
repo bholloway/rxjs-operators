@@ -119,7 +119,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return Subclass;
 	
 	  function lift(operator) {
-	    /* jshint: validthis */
+	    /* jshint validthis:true */
 	    var observable = new Subclass();
 	    observable.source = this;
 	    observable.operator = operator;
@@ -234,7 +234,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
 	 */
 	function disposableOperator(scheduler) {
-	  /* jshint: validthis */
+	  /* jshint validthis:true */
 	
 	  // force completion on disposal
 	  var isDisposed,
@@ -292,7 +292,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {Observable} An observable with additional `lifecycle:Observable` field
 	 */
 	function lifecycleOperator(scheduler) {
-	  /* jshint: validthis */
+	  /* jshint validthis:true */
 	  var isDisposed;
 	
 	  // reference-count lifecycle observable
@@ -365,7 +365,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns An instance of the given class
 	 */
 	function toObservableOperator(subclass) {
-	  /* jshint: validthis */
+	  /* jshint validthis:true */
 	  return subclass.lift.call(this, this.operator);
 	}
 	

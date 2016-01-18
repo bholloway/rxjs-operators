@@ -8,7 +8,7 @@ var subclassWith = require('../utility/subclass-with'),
 describe('lifecycle', function () {
   var Observable,
       observable,
-      upstream,
+      stimulus,
       scheduler;
 
   beforeEach(function () {
@@ -19,7 +19,7 @@ describe('lifecycle', function () {
 
   beforeEach(function () {
     observable = new Observable(function (instance) {
-      upstream = instance;
+      stimulus = instance;
     });
   });
 
@@ -28,13 +28,13 @@ describe('lifecycle', function () {
   });
 
   describe('lifecycle observable', function () {
-    var operated,
+    var output,
         lifecycleObserver,
         index         = 0,
         subscriptions = [];
 
     beforeEach(function () {
-      operated = operated || observable.lifecycle(scheduler);
+      output = output || observable.lifecycle(scheduler);
     });
 
     beforeEach(function () {
@@ -42,11 +42,11 @@ describe('lifecycle', function () {
     });
 
     beforeEach(function () {
-      operated.lifecycle.subscribe(lifecycleObserver.next, undefined, lifecycleObserver.complete);
+      output.lifecycle.subscribe(lifecycleObserver.next, undefined, lifecycleObserver.complete);
       switch (index++) {
         case 0:
         case 1:
-          subscriptions.push(operated.subscribe(function () {
+          subscriptions.push(output.subscribe(function () {
           }));
           break;
         case 2:
@@ -82,7 +82,7 @@ describe('lifecycle', function () {
     });
 
     it('should complete when the upstream observable completes', function () {
-      upstream.complete();
+      stimulus.complete();
       expect(lifecycleObserver.complete).not.toHaveBeenCalled();
       scheduler.flush();
       expect(lifecycleObserver.next).toHaveBeenCalled();

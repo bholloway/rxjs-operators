@@ -7,7 +7,7 @@
 		exports["rxOperators"] = factory(require("Rx"));
 	else
 		root["rxOperators"] = factory(root["Rx"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_7__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_3__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -72,21 +72,62 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Author: Ben Holloway @bholloway
 	 */
 	
-	var OPERATORS = {
-	  behavior    : __webpack_require__(/*! ./operator/behavior */ 2),
-	  disposable  : __webpack_require__(/*! ./operator/disposable */ 3),
-	  lifecycle   : __webpack_require__(/*! ./operator/lifecycle */ 4),
-	  toObservable: __webpack_require__(/*! ./operator/to-observable */ 5)
+	module.exports = {
+	  utilty  : {
+	    subclassWith: __webpack_require__(/*! ./utility/subclass-with */ 2)
+	  },
+	  operator: {
+	    behavior    : __webpack_require__(/*! ./operator/behavior */ 4),
+	    disposable  : __webpack_require__(/*! ./operator/disposable */ 5),
+	    lifecycle   : __webpack_require__(/*! ./operator/lifecycle */ 6),
+	    toObservable: __webpack_require__(/*! ./operator/to-observable */ 7)
+	  }
 	};
-	
-	module.exports = __webpack_require__(/*! ./utility/subclass-with */ 6);
-	
-	for (var key in OPERATORS) {
-	  module.exports[key] = OPERATORS[key];
-	}
 
 /***/ },
 /* 2 */
+/*!**********************************!*\
+  !*** ./utility/subclass-with.js ***!
+  \**********************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	var Operator = __webpack_require__(/*! rxjs */ 3).Operator;
+	
+	/**
+	 * Create a subclass of `Rx.Operator` that includes the given operators.
+	 * @param {object} operators A hash of operator functions
+	 * @returns {class} A subclass that includes the given operators
+	 */
+	function subclassWith(operators) {
+	  var Subclass = function Subclass() {
+	    Operator.apply(this, Array.prototype.slice.call(arguments));
+	  };
+	
+	  Subclass.prototype = Object.create(Operator);
+	  Subclass.prototype.constructor = Operator;
+	
+	  for (var key in operators) {
+	    if (operators.hasOwnProperty(key)) {
+	      Subclass.prototype[key] = operators[key];
+	    }
+	  }
+	
+	  return Subclass;
+	}
+	
+	module.exports = subclassWith;
+
+/***/ },
+/* 3 */
+/*!*********************!*\
+  !*** external "Rx" ***!
+  \*********************/
+/***/ function(module, exports) {
+
+	module.exports = __WEBPACK_EXTERNAL_MODULE_3__;
+
+/***/ },
+/* 4 */
 /*!******************************!*\
   !*** ./operator/behavior.js ***!
   \******************************/
@@ -158,7 +199,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = behaviorOperator;
 
 /***/ },
-/* 3 */
+/* 5 */
 /*!********************************!*\
   !*** ./operator/disposable.js ***!
   \********************************/
@@ -215,13 +256,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = disposableOperator;
 
 /***/ },
-/* 4 */
+/* 6 */
 /*!*******************************!*\
   !*** ./operator/lifecycle.js ***!
   \*******************************/
 /***/ function(module, exports, __webpack_require__) {
 
-	var behaviorOperator = __webpack_require__(/*! ./behavior */ 2);
+	var behaviorOperator = __webpack_require__(/*! ./behavior */ 4);
 	
 	/**
 	 * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
@@ -289,7 +330,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = lifecycleOperator;
 
 /***/ },
-/* 5 */
+/* 7 */
 /*!***********************************!*\
   !*** ./operator/to-observable.js ***!
   \***********************************/
@@ -344,46 +385,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	module.exports = disposableOperator;
-
-/***/ },
-/* 6 */
-/*!**********************************!*\
-  !*** ./utility/subclass-with.js ***!
-  \**********************************/
-/***/ function(module, exports, __webpack_require__) {
-
-	var Operator = __webpack_require__(/*! rxjs */ 7).Operator;
-	
-	/**
-	 * Create a subclass of `Rx.Operator` that includes the given operators.
-	 * @param {object} operators A hash of operator functions
-	 * @returns {Class} A subclass that includes the given operators
-	 */
-	function subclassWith(operators) {
-	  var Subclass = function Subclass() {
-	    Operator.apply(this, Array.prototype.slice.call(arguments));
-	  };
-	
-	  Subclass.prototype = Object.create(Operator);
-	  Subclass.prototype.constructor = Operator;
-	
-	  for (var key in OPERATORS) {
-	    Subclass.prototype[key] = OPERATORS[key];
-	  }
-	
-	  return Subclass;
-	}
-	
-	module.exports = subclassWith;
-
-/***/ },
-/* 7 */
-/*!*********************!*\
-  !*** external "Rx" ***!
-  \*********************/
-/***/ function(module, exports) {
-
-	module.exports = __WEBPACK_EXTERNAL_MODULE_7__;
 
 /***/ }
 /******/ ])

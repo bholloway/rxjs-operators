@@ -4,8 +4,9 @@
   "description": "A library of operators for RxJS",
   "main": "index.js",
   "scripts": {
-    "test": "node ./node_modules/jasmine-node/lib/jasmine-node/cli.js --test-dir ./cold --verbose",
-    "build": "source $NVM_DIR/nvm.sh; nvm use 4.0.0 ; webpack -d"
+    "use": "source $NVM_DIR/nvm.sh; nvm use 4.0.0;",
+    "test": "npm run use; node_modules/jasmine-node/bin/jasmine-node --verbose --captureExceptions ./operator",
+    "build": "npm run use; webpack -d"
   },
   "repository": {
     "type": "git",
@@ -27,7 +28,7 @@
   "dependencies": {
   },
   "devDependencies": {
-    "jasmine-node": "^1.14.5",
+    "jasmine-node": "2.0.0-beta4",
     "rxjs": "^5.0.0-beta.1"
   }
 }

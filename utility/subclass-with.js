@@ -1,19 +1,19 @@
 'use strict';
 
-var Operator = require('rxjs').Operator;
+var Observable = require('rxjs').Observable;
 
 /**
  * Create a subclass of `Rx.Operator` that includes the given operators.
  * @param {object} operators A hash of operator functions
- * @returns {class} A subclass that includes the given operators
+ * @returns {function} A subclass that includes the given operators
  */
 function subclassWith(operators) {
   var Subclass = function Subclass() {
-    Operator.apply(this, Array.prototype.slice.call(arguments));
+    Observable.apply(this, Array.prototype.slice.call(arguments));
   };
 
-  Subclass.prototype = Object.create(Operator);
-  Subclass.prototype.constructor = Operator;
+  Subclass.prototype = Object.create(Observable.prototype);
+  Subclass.prototype.constructor = Subclass;
   Subclass.prototype.lift = lift;
 
   for (var key in operators) {

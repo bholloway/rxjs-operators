@@ -1,5 +1,7 @@
 'use strict';
 
+var Observable = require('rxjs').Observable;
+
 /**
  * Transform the current Observable to an Observable with a different class implementation.
  * Where it is already of the same `constructor` then the current instance is returned unchanged.
@@ -8,24 +10,28 @@
  * @param Subclass A subclass of `Observable` to cast the observable to
  * @returns An instance of the given class
  */
-function toObservableOperator(Subclass) {
+function toObservable(Subclass) {
   /* jshint validthis:true */
 
-  // determine whether we can/should convert the Observable
-  var isConvert = (typeof Subclass === 'function') && (typeof this.constructor === 'function') &&
-    (typeof Subclass.prototype.constructor === 'function') && (this.constructor !== Subclass.prototype.constructor);
+  // any subclass of Observable or Observable itself is valid
+  var isValid = (typeof Subclass === 'function') && !!Subclass.prototype && (typeof Subclass.prototype === 'object') &&
+    ((Subclass === Observable) || (Subclass.prototype instanceof Observable));
 
-  // valid
-  if (isConvert) {
+  // invalid argument
+  if (!isValid) {
+    throw new TypeError('given argument must be a subclass of Rx.Observable');
+  }
+  // same class implies unchanged
+  else if (Subclass.prototype.isPrototypeOf(this)) {
+    return this;
+  }
+  // mismatch implies new instance (similar to Observable.lift)
+  else {
     var observable = new Subclass();
     observable.source = this;
     observable.operator = this.operator;
     return observable;
   }
-  // invalid implies unchanged
-  else {
-    return this;
-  }
 }
 
-module.exports = toObservableOperator;
+module.exports = toObservable;

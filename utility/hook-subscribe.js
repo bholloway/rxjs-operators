@@ -18,7 +18,7 @@ function hookSubscribe(connectableObs, callback) {
 
     subscription._unsubscribe = function unsubscribe() {
       _unsubscribe.call(subscription);
-      callback(connectableObs.refCount - 1);
+      callback(connectableObs.refCount);
     };
     return subscription;
   };

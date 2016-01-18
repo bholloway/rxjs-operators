@@ -1,49 +1,11 @@
 /**
- * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
- * notifications, unless or until the source Observable is complete or the Subject is disposed.
+ * Transform the current Observable to an Observable with a different class implementation.
  *
- * This Subject introduces a complete that will cause following operators in the observable chain to also complete,
- * and any disposal lifecycle hooks (i.e. `.using()`) will fire. There is some duplication with the `takeUntil()`
- * operator which you should consider as an alternative. This Subject is more convenient in the case where where you
- * want to terminate by simple function call, rather than an observable.
- *
- * @param [scheduler] Optional scheduler for internal use
- * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
+ * @param subclass A subclass of `Observable` to cast the observable to
+ * @returns An instance of the given class
  */
-function disposableOperator(scheduler) {
-
-  // force completion on disposal
-  var isDisposed,
-      disposeObserver,
-      disposeObs = Rx.Observable.create(function (observer) {
-        disposeObserver = observer;
-      });
-
-  var result = this
-    .do(undefined, undefined, dispose)
-    .takeUntil(disposeObs);
-
-  // composition
-  return Object.defineProperties(result, {
-    dispose      : {value: dispose},
-    getIsDisposed: {value: getIsDisposed},
-    isDisposed   : {get: getIsDisposed}
-  });
-
-  function dispose() {
-    if (!isDisposed) {
-      isDisposed = true;
-      disposeObserver.next();
-      disposeObserver.complete();
-
-      disposeObserver = disposeObs = null;
-      result = null;
-    }
-  }
-
-  function getIsDisposed() {
-    return isDisposed;
-  }
+function toObservableOperator(subclass) {
+  throw new Error('todo')
 }
 
-module.exports = disposableOperator;
+module.exports = toObservableOperator;

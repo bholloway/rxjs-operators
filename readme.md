@@ -73,17 +73,6 @@ Exposes an `isValid` flag which negates any time the current value is the `initi
 
 ![operator.behavior](operator/behavior.png)
 
-### `operator.lifecycle([scheduler]) : Observable`
-
-Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
-
-* **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
-* **@returns** `:Observable` An observable with an additional `lifecycle:Observable` field
-
-Exposes a `lifecycle` Observable which tracks the number of subscriptions to the Subject proper. It will complete when the source `Observable` completes and it is a behavior (see above) in that all new subscriptions will immediately receive the current reference count as their first value, unless or until the source `observable` is complete.
-
-![operator.lifecycle](operator/lifecycle.png)
-
 ### `operator.disposable([scheduler]) : Observable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete or the Subject is **disposed**.
@@ -102,3 +91,21 @@ Exposes an `isDisposed` flag which indicates whether the Subject has completed.
 There is some duplication with the [`takeUntil()` operator](http://reactivex.io/documentation/operators/takeuntil.html) which you should consider as an alternative.
 
 This operator is more convenient in the case where where you want to terminate by simple function call, rather than an observable. If you find you are iterating over observables and calling `.dispose()` then you should compose with `.takeUntil(kill)` and a single `kill:Observable` instead.
+
+### `operator.lifecycle([scheduler]) : Observable`
+
+Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
+
+* **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
+* **@returns** `:Observable` An observable with an additional `lifecycle:Observable` field
+
+Exposes a `lifecycle` Observable which tracks the number of subscriptions to the Subject proper. It will complete when the source `Observable` completes and it is a behavior (see above) in that all new subscriptions will immediately receive the current reference count as their first value, unless or until the source `observable` is complete.
+
+![operator.lifecycle](operator/lifecycle.png)
+
+### `operator.toObservable(subclass) : Observable`
+
+Transform the current Observable to an Observable with a different class implementation.
+
+* **@param** `subclass : Class` A subclass of `Observable` to cast the observable to
+* **@returns** `:Observable` An instance of the given class

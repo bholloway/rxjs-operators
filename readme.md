@@ -103,9 +103,9 @@ Exposes a `lifecycle` Observable which tracks the number of subscriptions to the
 
 ![operator.lifecycle](operator/lifecycle.png)
 
-### `operator.toObservable(subclass) : Observable`
+### `operator.toObservable(Subclass) : Observable`
 
 Transform the current Observable to an Observable with a different class implementation.
 
-* **@param** `subclass : Class` A subclass of `Observable` to cast the observable to
+* **@param** `Subclass : Class` A subclass of `Observable` to cast the observable to
 * **@returns** `:Observable` An instance of the given class

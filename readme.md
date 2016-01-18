@@ -63,7 +63,7 @@ Create a subclass of `Rx.Operator` that includes the given operators.
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive the **last (or initial) value** and all subsequent notifications, unless or until the source Observable is complete.
 
-* **@param** `[initialValue] : *` Optional value to use when invalid (defaults to `undefined`)
+* **@param** `[initialValue] : function():*|*` Optional value to use when invalid or factory thereof (default `undefined`)
 * **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
 * **@returns** `:Observable` An observable with additional `clear()` method and `isValid:boolean` field
 

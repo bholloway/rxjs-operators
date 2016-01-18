@@ -30,8 +30,8 @@ describe('lifecycle', function () {
   describe('lifecycle observable', function () {
     var output,
         lifecycleObserver,
-        index         = 0,
-        subscriptions = [];
+        lifecycleSubscription,
+        outputSubscriptions = [];
 
     beforeEach(function () {
       output = output || observable.lifecycle(scheduler);
@@ -42,68 +42,120 @@ describe('lifecycle', function () {
     });
 
     beforeEach(function () {
-      output.lifecycle.subscribe(lifecycleObserver.next, undefined, lifecycleObserver.complete);
-      switch (index++) {
-        case 0:
-        case 1:
-          subscriptions.push(output.subscribe(function () {
-          }));
-          break;
-        case 2:
-        case 3:
-          subscriptions.pop().unsubscribe();
-          break;
-      }
+      lifecycleSubscription = output.lifecycle.subscribe(lifecycleObserver.next, undefined, lifecycleObserver.complete);
     });
 
-    it('should be initially NEXT 0', function () {
-      scheduler.flush();
-      expect(lifecycleObserver.next).toHaveBeenCalledWith(0);
+    describe('without any downstream subscribers', function () {
+      expectSubscribers(0, 0);
     });
 
-    it('should increment after first subscribe', function () {
-      scheduler.flush();
-      expect(lifecycleObserver.next).toHaveBeenCalledWith(1);
+    describe('with one downstream subscribe', function () {
+      expectSubscribers(0, +1);
     });
 
-    it('should increment after second subscribe', function () {
-      scheduler.flush();
-      expect(lifecycleObserver.next).toHaveBeenCalledWith(2);
+    describe('with another downstream subscribe', function () {
+      expectSubscribers(1, +1);
     });
 
-    it('should decrement after first unsubscribe', function () {
-      scheduler.flush();
-      expect(lifecycleObserver.next).toHaveBeenCalledWith(1);
+    describe('with one downstream unsubscribe', function () {
+      expectSubscribers(2, -1);
     });
 
-    it('should decrement after second unsubscribe', function () {
-      scheduler.flush();
-      expect(lifecycleObserver.next).toHaveBeenCalledWith(0);
+    describe('with another downstream unsubscribe', function () {
+      expectSubscribers(1, -1);
     });
 
-    it('should complete when the upstream observable completes', function () {
+    it('should COMPLETE when the upstream observable COMPLETE', function () {
       stimulus.complete();
-      expect(lifecycleObserver.complete).not.toHaveBeenCalled();
+      subscribeToOutput();
       scheduler.flush();
-      expect(lifecycleObserver.next).toHaveBeenCalled();
+      expect(lifecycleObserver.complete).toHaveBeenCalled();
     });
+
+    afterEach(function () {
+      lifecycleSubscription.unsubscribe();
+      lifecycleSubscription = null;
+    });
+
+    function expectSubscribers(initialCount, delta) {
+
+      it('should be a Behavior and NEXT initial count ' + initialCount, function () {
+        scheduler.flush();
+        expect(lifecycleObserver.next).toHaveBeenCalledWith(initialCount);
+      });
+
+      if (delta > 0) {
+        it('should NEXT incremented count after subscribe', function () {
+          scheduler.flush();
+          subscribeToOutput();
+          scheduler.flush();
+          expect(lifecycleObserver.next).toHaveBeenCalledWith(initialCount + 1);
+        });
+      }
+      else if (delta < 0) {
+        it('should NEXT decremented count after unsubscribe', function () {
+          scheduler.flush();
+          unsubscribeToOutput();
+          scheduler.flush();
+          expect(lifecycleObserver.next).toHaveBeenCalledWith(initialCount - 1);
+        });
+      }
+    }
+
+    function subscribeToOutput() {
+      outputSubscriptions.push(output.subscribe(function () {
+      }));
+    }
+
+    function unsubscribeToOutput() {
+      outputSubscriptions.pop()
+        .unsubscribe();
+    }
   });
 
   describe('downstream observable', function () {
+    var output,
+        downstreamObserver,
+        outputSubscription;
 
-// TODO
+    beforeEach(function () {
+      output = output || observable.lifecycle(scheduler);
+    });
 
+    beforeEach(function () {
+      downstreamObserver = getObserver();
+    });
+
+    beforeEach(function () {
+      outputSubscription = output.subscribe(downstreamObserver.next, undefined, downstreamObserver.complete);
+    });
+
+    it('should NEXT when the upstream observable NEXT', function () {
+      var value = Math.random();
+      stimulus.next(value);
+      expect(downstreamObserver.next).toHaveBeenCalledWith(value);
+    });
+
+    it('should COMPLETE when the upstream observable COMPLETE', function () {
+      stimulus.complete();
+      expect(downstreamObserver.complete).toHaveBeenCalled();
+    });
+
+    afterEach(function () {
+      outputSubscription.unsubscribe();
+      outputSubscription = null;
+    });
   });
 });
 
 function getObserver() {
   var observer = {
-    next    : function () {
+    next    : function (value) {
     },
     complete: function () {
     }
   };
-  spyOn(observer, 'next');
-  spyOn(observer, 'complete');
+  spyOn(observer, 'next').and.callThrough();
+  spyOn(observer, 'complete').and.callThrough();
   return observer;
 }

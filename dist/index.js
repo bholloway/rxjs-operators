@@ -71,6 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * MIT License http://opensource.org/licenses/MIT
 	 * Author: Ben Holloway @bholloway
 	 */
+	'use strict';
 	
 	module.exports = {
 	  utilty  : {
@@ -91,6 +92,8 @@ return /******/ (function(modules) { // webpackBootstrap
   \**********************************/
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+	
 	var Operator = __webpack_require__(/*! rxjs */ 3).Operator;
 	
 	/**
@@ -105,6 +108,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  Subclass.prototype = Object.create(Operator);
 	  Subclass.prototype.constructor = Operator;
+	  Subclass.prototype.lift = lift;
 	
 	  for (var key in operators) {
 	    if (operators.hasOwnProperty(key)) {
@@ -113,6 +117,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  return Subclass;
+	
+	  function lift(operator) {
+	    /* jshint: validthis */
+	    var observable = new Subclass();
+	    observable.source = this;
+	    observable.operator = operator;
+	    return observable;
+	  }
 	}
 	
 	module.exports = subclassWith;
@@ -133,6 +145,8 @@ return /******/ (function(modules) { // webpackBootstrap
   \******************************/
 /***/ function(module, exports) {
 
+	'use strict';
+	
 	/**
 	 * Represents a value that changes over time. Observers can subscribe to the subject to receive the last (or initial)
 	 * value and all subsequent notifications, unless or until the source Observable is complete.
@@ -205,6 +219,8 @@ return /******/ (function(modules) { // webpackBootstrap
   \********************************/
 /***/ function(module, exports) {
 
+	'use strict';
+	
 	/**
 	 * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
 	 * notifications, unless or until the source Observable is complete or the Subject is disposed.
@@ -218,6 +234,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
 	 */
 	function disposableOperator(scheduler) {
+	  /* jshint: validthis */
 	
 	  // force completion on disposal
 	  var isDisposed,
@@ -262,6 +279,8 @@ return /******/ (function(modules) { // webpackBootstrap
   \*******************************/
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+	
 	var behaviorOperator = __webpack_require__(/*! ./behavior */ 4);
 	
 	/**
@@ -273,6 +292,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {Observable} An observable with additional `lifecycle:Observable` field
 	 */
 	function lifecycleOperator(scheduler) {
+	  /* jshint: validthis */
 	  var isDisposed;
 	
 	  // reference-count lifecycle observable
@@ -336,55 +356,20 @@ return /******/ (function(modules) { // webpackBootstrap
   \***********************************/
 /***/ function(module, exports) {
 
+	'use strict';
+	
 	/**
-	 * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
-	 * notifications, unless or until the source Observable is complete or the Subject is disposed.
+	 * Transform the current Observable to an Observable with a different class implementation.
 	 *
-	 * This Subject introduces a complete that will cause following operators in the observable chain to also complete,
-	 * and any disposal lifecycle hooks (i.e. `.using()`) will fire. There is some duplication with the `takeUntil()`
-	 * operator which you should consider as an alternative. This Subject is more convenient in the case where where you
-	 * want to terminate by simple function call, rather than an observable.
-	 *
-	 * @param [scheduler] Optional scheduler for internal use
-	 * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
+	 * @param subclass A subclass of `Observable` to cast the observable to
+	 * @returns An instance of the given class
 	 */
-	function disposableOperator(scheduler) {
-	
-	  // force completion on disposal
-	  var isDisposed,
-	      disposeObserver,
-	      disposeObs = Rx.Observable.create(function (observer) {
-	        disposeObserver = observer;
-	      });
-	
-	  var result = this
-	    .do(undefined, undefined, dispose)
-	    .takeUntil(disposeObs);
-	
-	  // composition
-	  return Object.defineProperties(result, {
-	    dispose      : {value: dispose},
-	    getIsDisposed: {value: getIsDisposed},
-	    isDisposed   : {get: getIsDisposed}
-	  });
-	
-	  function dispose() {
-	    if (!isDisposed) {
-	      isDisposed = true;
-	      disposeObserver.next();
-	      disposeObserver.complete();
-	
-	      disposeObserver = disposeObs = null;
-	      result = null;
-	    }
-	  }
-	
-	  function getIsDisposed() {
-	    return isDisposed;
-	  }
+	function toObservableOperator(subclass) {
+	  /* jshint: validthis */
+	  return subclass.lift.call(this, this.operator);
 	}
 	
-	module.exports = disposableOperator;
+	module.exports = toObservableOperator;
 
 /***/ }
 /******/ ])

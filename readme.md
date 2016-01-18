@@ -12,7 +12,7 @@ You may either:
  * Use the whole package to get a hash `object` of all `rxOperators.operator.*` and `rxOperators.utility.*`.
  * Import individual operators from `/operator` and/or utilities from `/utility`.
 
-The operators are simply`function` that expect `this` to be `Observable` If they were contained within RxJS then they would be prototype functions on `Observable`.
+The operators are simply `function` that expect `this` to be the **upstream** `Observable` If they were contained within RxJS then they would be prototype functions on `Observable`. They create and return a **downstream** `Observable`.
 
 To use the operators you should either:
 
@@ -73,7 +73,7 @@ Exposes an `isValid` flag which negates any time the current value is the `initi
 
 ![operator.behavior](operator/behavior.png)
 
-### `operator.lifecycle([scheduler])`
+### `operator.lifecycle([scheduler]) : Observable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
 
@@ -84,7 +84,7 @@ Exposes a `lifecycle` Observable which tracks the number of subscriptions to the
 
 ![operator.lifecycle](operator/lifecycle.png)
 
-### `operator.disposable([scheduler])`
+### `operator.disposable([scheduler]) : Observable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete or the Subject is **disposed**.
 

@@ -9,7 +9,10 @@ describe('lifecycle', function () {
   var Observable,
       observable,
       stimulus,
-      scheduler;
+      scheduler,
+      output;
+
+  var outputSubscriptions = [];
 
   beforeEach(function () {
     Observable = subclassWith({
@@ -27,22 +30,22 @@ describe('lifecycle', function () {
     scheduler = scheduler || new VirtualTimeScheduler();
   });
 
-  describe('lifecycle observable', function () {
-    var output,
-        lifecycleObserver,
-        lifecycleSubscription,
-        outputSubscriptions = [];
+  beforeEach(function () {
+    output = output || observable.lifecycle(scheduler);
+  });
 
-    beforeEach(function () {
-      output = output || observable.lifecycle(scheduler);
-    });
+  describe('lifecycle observable', function () {
+    var lifecycleObserver,
+        lifecycleSubscription;
 
     beforeEach(function () {
       lifecycleObserver = getObserver();
     });
 
     beforeEach(function () {
-      lifecycleSubscription = output.lifecycle.subscribe(lifecycleObserver.next, undefined, lifecycleObserver.complete);
+      lifecycleSubscription = output.lifecycle
+        .subscribeOn(scheduler)
+        .subscribe(lifecycleObserver.next, undefined, lifecycleObserver.complete);
     });
 
     describe('without any downstream subscribers', function () {
@@ -66,10 +69,14 @@ describe('lifecycle', function () {
     });
 
     it('should COMPLETE when the upstream observable COMPLETE', function () {
-      stimulus.complete();
-      subscribeToOutput();
+      var outputObserver = getObserver();
+      subscribeToOutput(outputObserver);
       scheduler.flush();
+      stimulus.complete();
+      scheduler.flush();
+      expect(outputObserver.complete).toHaveBeenCalled();
       expect(lifecycleObserver.complete).toHaveBeenCalled();
+      output = null;
     });
 
     afterEach(function () {
@@ -85,7 +92,7 @@ describe('lifecycle', function () {
       });
 
       if (delta > 0) {
-        it('should NEXT incremented count after subscribe', function () {
+        it('should NEXT incremented count (to ' + (initialCount + 1) + ') after subscribe', function () {
           scheduler.flush();
           subscribeToOutput();
           scheduler.flush();
@@ -93,7 +100,7 @@ describe('lifecycle', function () {
         });
       }
       else if (delta < 0) {
-        it('should NEXT decremented count after unsubscribe', function () {
+        it('should NEXT decremented count (to ' + (initialCount - 1) + ') after unsubscribe', function () {
           scheduler.flush();
           unsubscribeToOutput();
           scheduler.flush();
@@ -101,44 +108,35 @@ describe('lifecycle', function () {
         });
       }
     }
-
-    function subscribeToOutput() {
-      outputSubscriptions.push(output.subscribe(function () {
-      }));
-    }
-
-    function unsubscribeToOutput() {
-      outputSubscriptions.pop()
-        .unsubscribe();
-    }
   });
 
   describe('downstream observable', function () {
-    var output,
-        downstreamObserver,
+    var outputObserver,
         outputSubscription;
 
     beforeEach(function () {
-      output = output || observable.lifecycle(scheduler);
+      outputObserver = getObserver();
     });
 
     beforeEach(function () {
-      downstreamObserver = getObserver();
-    });
-
-    beforeEach(function () {
-      outputSubscription = output.subscribe(downstreamObserver.next, undefined, downstreamObserver.complete);
+      outputSubscription = output
+        .subscribeOn(scheduler)
+        .subscribe(outputObserver.next, undefined, outputObserver.complete);
+      scheduler.flush();
     });
 
     it('should NEXT when the upstream observable NEXT', function () {
       var value = Math.random();
       stimulus.next(value);
-      expect(downstreamObserver.next).toHaveBeenCalledWith(value);
+      scheduler.flush();
+      expect(outputObserver.next).toHaveBeenCalledWith(value);
     });
 
     it('should COMPLETE when the upstream observable COMPLETE', function () {
       stimulus.complete();
-      expect(downstreamObserver.complete).toHaveBeenCalled();
+      scheduler.flush();
+      expect(outputObserver.complete).toHaveBeenCalled();
+      output = null;
     });
 
     afterEach(function () {
@@ -146,13 +144,38 @@ describe('lifecycle', function () {
       outputSubscription = null;
     });
   });
+
+  function subscribeToOutput(observer) {
+    outputSubscriptions.push(output
+      .subscribeOn(scheduler)
+      .subscribe(
+        observer && observer.next || function () {
+        },
+        observer && observer.error || function () {
+        },
+        observer && observer.complete || function () {
+        }
+      )
+    );
+  }
+
+  function unsubscribeToOutput() {
+    outputSubscriptions.pop()
+      .unsubscribe();
+  }
 });
 
-function getObserver() {
+function getObserver(isDebug) {
   var observer = {
     next    : function (value) {
+      if (isDebug) {
+        console.log('NEXT', value);
+      }
     },
     complete: function () {
+      if (isDebug) {
+        console.log('COMPLETE');
+      }
     }
   };
   spyOn(observer, 'next').and.callThrough();

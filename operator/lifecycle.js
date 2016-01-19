@@ -18,22 +18,24 @@ var behavior      = require('./behavior'),
 function lifecycle(scheduler) {
   /* jshint validthis:true */
   var isDisposed,
-      count = 0;
+      upstreamObs = this,
+      count       = 0;
 
   // reference-count lifecycle behavior observable of the same type
-  var countObserver,
-      countObs         = Observable.create(function (observer) {
+  var countStim,
+      countObs         = Observable.create(function (instance) {
         if (isDisposed) {
-          observer.complete();
-        } else {
-          countObserver = observer;
+          instance.complete();
+        }
+        else {
+          countStim = instance;
         }
       }, scheduler),
       countBehaviorObs = behavior.call(countObs, getCount, scheduler),
       countCastObs     = toObservable.call(countBehaviorObs, this.constructor);
 
   // publish single observable for all subscribers
-  var result = this
+  var result = upstreamObs
     .do(undefined, undefined, dispose)
     .publish()
     .refCount();
@@ -49,11 +51,13 @@ function lifecycle(scheduler) {
   function dispose() {
     if (!isDisposed) {
       isDisposed = true;
-      if (countObserver) {
-        countObserver.complete();
+
+      if (countStim) {
+        countStim.complete();
       }
 
-      countObserver = countObs = countBehaviorObs = countCastObs = null;
+      upstreamObs = null;
+      countStim = countObs = countBehaviorObs = countCastObs = null;
       result = null;
     }
   }
@@ -61,8 +65,8 @@ function lifecycle(scheduler) {
   function onCount(value) {
     if (value !== count) {
       count = value;
-      if (countObserver) {
-        countObserver.next(count);
+      if (countStim) {
+        countStim.next(count);
       }
     }
   }

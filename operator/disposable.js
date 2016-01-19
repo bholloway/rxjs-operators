@@ -17,15 +17,21 @@ var Observable = require('rxjs').Observable;
  */
 function disposable(scheduler) {
   /* jshint validthis:true */
+  var isDisposed,
+      upstreamObs = this;
 
   // force completion on disposal
-  var isDisposed,
-      disposeObserver,
+  var disposeObserver,
       disposeObs = Observable.create(function (observer) {
-        disposeObserver = observer;
+        if (isDisposed) {
+          observer.complete();
+        }
+        else {
+          disposeObserver = observer;
+        }
       }, scheduler);
 
-  var result = this
+  var result = upstreamObs
     .do(undefined, undefined, dispose)
     .takeUntil(disposeObs);
 
@@ -39,9 +45,13 @@ function disposable(scheduler) {
   function dispose() {
     if (!isDisposed) {
       isDisposed = true;
-      disposeObserver.next();
-      disposeObserver.complete();
 
+      if (disposeObserver) {
+        disposeObserver.next();
+        disposeObserver.complete();
+      }
+
+      upstreamObs = null;
       disposeObserver = disposeObs = null;
       result = null;
     }

@@ -16,15 +16,21 @@ var toObservable = require('./to-observable');
 function behavior(initialValue, scheduler) {
   /* jshint validthis:true */
   var currentValue,
-      isAssigned = false,
-      isDisposed = false;
+      isAssigned  = false,
+      isDisposed  = false,
+      upstreamObs = this;
 
   // shared by all subscribers
-  var sourceObs = this.do(store, undefined, dispose);
+  var sourceObs = upstreamObs.do(store, undefined, dispose);
 
-  var clearObserver,
-      clearObs = Observable.create(function (observer) {
-        clearObserver = observer;
+  var clearStim,
+      clearObs = Observable.create(function (instance) {
+        if (isDisposed) {
+          instance.complete();
+        }
+        else {
+          clearStim = instance;
+        }
       }, scheduler);
 
   var sharedObs = Observable.merge(sourceObs, clearObs, scheduler);
@@ -37,7 +43,7 @@ function behavior(initialValue, scheduler) {
   });
 
   // ensure the result is the correct type
-  var castResult = toObservable.call(result, this.constructor);
+  var castResult = toObservable.call(result, upstreamObs.constructor);
 
   // composition
   return Object.defineProperties(castResult, {
@@ -55,7 +61,7 @@ function behavior(initialValue, scheduler) {
     if (!isDisposed) {
       isAssigned = false;
       currentValue = undefined;
-      clearObserver.next(getInitialValue());
+      clearStim.next(getInitialValue());
     }
   }
 
@@ -65,10 +71,13 @@ function behavior(initialValue, scheduler) {
 
       isAssigned = false;
       currentValue = undefined;
-      clearObserver.complete();
+      if (clearStim) {
+        clearStim.complete();
+      }
 
+      upstreamObs = null;
       sourceObs = null;
-      clearObserver = clearObs = null;
+      clearStim = clearObs = null;
       sharedObs = null;
       result = null;
       castResult = null;

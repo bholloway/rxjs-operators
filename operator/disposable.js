@@ -31,12 +31,12 @@ function disposable(scheduler) {
         }
       }, scheduler);
 
-  var result = upstreamObs
+  var resultObs = upstreamObs
     .do(undefined, undefined, dispose)
     .takeUntil(disposeObs);
 
   // composition
-  return Object.defineProperties(result, {
+  return Object.defineProperties(resultObs, {
     dispose      : {value: dispose},
     getIsDisposed: {value: getIsDisposed},
     isDisposed   : {get: getIsDisposed}
@@ -53,7 +53,7 @@ function disposable(scheduler) {
 
       upstreamObs = null;
       disposeObserver = disposeObs = null;
-      result = null;
+      resultObs = null;
     }
   }
 

@@ -21,7 +21,8 @@ function behavior(initialValue, scheduler) {
       upstreamObs = this;
 
   // shared by all subscribers
-  var sourceObs = upstreamObs.do(store, undefined, dispose);
+  var sourceObs = upstreamObs
+    .do(store, undefined, dispose);
 
   var clearStim,
       clearObs = Observable.create(function (instance) {
@@ -35,18 +36,18 @@ function behavior(initialValue, scheduler) {
 
   var sharedObs = Observable.merge(sourceObs, clearObs, scheduler);
 
-  // factory an observable for each subscriber
-  var result = Observable.defer(function () {
+  // ensure that new subscribers are notified COMPLETE if the instance is disposed
+  var resultObs = Observable.defer(function () {
     return isDisposed ?
       Observable.empty() :
       Observable.merge(Observable.of(getStartValue()), sharedObs, scheduler);
   });
 
   // ensure the result is the correct type
-  var castResult = toObservable.call(result, upstreamObs.constructor);
+  var castResultObs = toObservable.call(resultObs, upstreamObs.constructor);
 
   // composition
-  return Object.defineProperties(castResult, {
+  return Object.defineProperties(castResultObs, {
     clear     : {value: clear},
     getIsValid: {value: getIsValid},
     isValid   : {get: getIsValid}
@@ -79,8 +80,8 @@ function behavior(initialValue, scheduler) {
       sourceObs = null;
       clearStim = clearObs = null;
       sharedObs = null;
-      result = null;
-      castResult = null;
+      resultObs = null;
+      castResultObs = null;
     }
   }
 

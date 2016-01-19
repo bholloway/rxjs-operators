@@ -35,16 +35,21 @@ function lifecycle(scheduler) {
       countCastObs     = toObservable.call(countBehaviorObs, this.constructor);
 
   // publish single observable for all subscribers
-  var result = upstreamObs
-    .do(undefined, undefined, dispose)
-    .publish()
-    .refCount();
+  var sharedObs = upstreamObs.do(undefined, undefined, dispose).publish().refCount();
 
   // hook the subscribe/unsubscribe methods to get a live reference count
-  hookSubscribe(result, onCount);
+  hookSubscribe(sharedObs, onCount);
+
+  // ensure that new subscribers are notified COMPLETE if the instance is disposed
+  var resultObs = Observable.defer(function () {
+    return isDisposed ? Observable.empty() : sharedObs;
+  });
+
+  // ensure the result is the correct type
+  var castResultObs = toObservable.call(resultObs, upstreamObs.constructor);
 
   // composition
-  return Object.defineProperties(result, {
+  return Object.defineProperties(castResultObs, {
     lifecycle: {value: countCastObs}
   });
 
@@ -58,7 +63,7 @@ function lifecycle(scheduler) {
 
       upstreamObs = null;
       countStim = countObs = countBehaviorObs = countCastObs = null;
-      result = null;
+      resultObs = null;
     }
   }
 

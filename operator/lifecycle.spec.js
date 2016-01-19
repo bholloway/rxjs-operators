@@ -21,13 +21,20 @@ describe('lifecycle', function () {
   });
 
   beforeEach(function () {
-    observable = new Observable(function (instance) {
-      stimulus = instance;
-    });
+    scheduler = scheduler || new VirtualTimeScheduler();
   });
 
   beforeEach(function () {
-    scheduler = scheduler || new VirtualTimeScheduler();
+    observable = new Observable(function (instance) {
+      stimulus = instance;
+    });
+    var subscription = observable
+      .subscribeOn(scheduler)
+      .subscribe(function () {
+      });
+    scheduler.flush();
+    subscription.unsubscribe();
+    scheduler.flush();
   });
 
   beforeEach(function () {
@@ -48,38 +55,56 @@ describe('lifecycle', function () {
         .subscribe(lifecycleObserver.next, undefined, lifecycleObserver.complete);
     });
 
-    describe('without any downstream subscribers', function () {
-      expectSubscribers(0, 0);
+    describe('notify NEXT', function () {
+
+      describe('without any downstream subscribers', function () {
+        expectSubscribers(0, 0);
+      });
+
+      describe('with one downstream subscribe', function () {
+        expectSubscribers(0, +1);
+      });
+
+      describe('with another downstream subscribe', function () {
+        expectSubscribers(1, +1);
+      });
+
+      describe('with one downstream unsubscribe', function () {
+        expectSubscribers(2, -1);
+      });
+
+      describe('with another downstream unsubscribe', function () {
+        expectSubscribers(1, -1);
+      });
     });
 
-    describe('with one downstream subscribe', function () {
-      expectSubscribers(0, +1);
-    });
+    describe('notify COMPLETE', function () {
 
-    describe('with another downstream subscribe', function () {
-      expectSubscribers(1, +1);
-    });
+      it('should occur when the upstream observable notifies COMPLETE', function () {
+        var outputObserver = getObserver();
+        subscribeToOutput(outputObserver);
+        scheduler.flush();
+        stimulus.complete();
+        scheduler.flush();
+        expect(outputObserver.complete).toHaveBeenCalled();
+        expect(lifecycleObserver.complete).toHaveBeenCalled();
+      });
 
-    describe('with one downstream unsubscribe', function () {
-      expectSubscribers(2, -1);
-    });
+      it('should occur when the upstream observable is already COMPLETE', function () {
+        stimulus.complete();
+        scheduler.flush();
 
-    describe('with another downstream unsubscribe', function () {
-      expectSubscribers(1, -1);
-    });
+        var outputObserver = getObserver();
+        subscribeToOutput(outputObserver);
+        scheduler.flush();
 
-    it('should notify COMPLETE when the upstream observable notifies COMPLETE', function () {
-      var outputObserver = getObserver();
-      subscribeToOutput(outputObserver);
-      scheduler.flush();
-      stimulus.complete();
-      scheduler.flush();
-      expect(outputObserver.complete).toHaveBeenCalled();
-      expect(lifecycleObserver.complete).toHaveBeenCalled();
-    });
+        expect(outputObserver.complete).toHaveBeenCalled();
+        output = null;
+      });
 
-    it('', function () {
-      output = null;
+      afterEach(function () {
+        output = null;
+      });
     });
 
     afterEach(function () {
@@ -120,39 +145,44 @@ describe('lifecycle', function () {
       outputObserver = getObserver();
     });
 
-    it('should notify NEXT when the upstream observable notifies NEXT', function () {
-      subscribeToOutput(outputObserver);
-      scheduler.flush();
+    describe('notify NEXT', function () {
 
-      var value = Math.random();
-      stimulus.next(value);
-      scheduler.flush();
-      expect(outputObserver.next).toHaveBeenCalledWith(value);
+      it('should occur when the upstream observable notifies NEXT', function () {
+        subscribeToOutput(outputObserver);
+        scheduler.flush();
+
+        var value = Math.random();
+        stimulus.next(value);
+        scheduler.flush();
+        expect(outputObserver.next).toHaveBeenCalledWith(value);
+      });
     });
 
-    it('should notify COMPLETE when the upstream observable notifies COMPLETE', function () {
-      subscribeToOutput(outputObserver);
-      scheduler.flush();
+    describe('notify COMPLETE', function () {
 
-      stimulus.complete();
-      scheduler.flush();
+      it('should occur when the upstream observable notifies COMPLETE', function () {
+        subscribeToOutput(outputObserver);
+        scheduler.flush();
 
-      expect(outputObserver.complete).toHaveBeenCalled();
-    });
+        stimulus.complete();
+        scheduler.flush();
 
-    it('should notify COMPLETE when the upstream observable is already COMPLETE', function () {
-      stimulus.complete();
-      scheduler.flush();
+        expect(outputObserver.complete).toHaveBeenCalled();
+      });
 
-      subscribeToOutput(outputObserver);
-      scheduler.flush();
+      it('should occur when the upstream observable is already COMPLETE', function () {
+        stimulus.complete();
+        scheduler.flush();
 
-      expect(outputObserver.complete).toHaveBeenCalled();
-      output = null;
-    });
+        subscribeToOutput(outputObserver);
+        scheduler.flush();
 
-    it('', function () {
-      output = null;
+        expect(outputObserver.complete).toHaveBeenCalled();
+      });
+
+      afterEach(function () {
+        output = null;
+      });
     });
 
     afterEach(unsubscribeToOutput);

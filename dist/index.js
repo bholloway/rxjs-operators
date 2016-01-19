@@ -79,9 +79,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  operator: {
 	    behavior    : __webpack_require__(/*! ./operator/behavior */ 4),
-	    disposable  : __webpack_require__(/*! ./operator/disposable */ 5),
-	    lifecycle   : __webpack_require__(/*! ./operator/lifecycle */ 6),
-	    toObservable: __webpack_require__(/*! ./operator/to-observable */ 7)
+	    disposable  : __webpack_require__(/*! ./operator/disposable */ 6),
+	    lifecycle   : __webpack_require__(/*! ./operator/lifecycle */ 7),
+	    toObservable: __webpack_require__(/*! ./operator/to-observable */ 5)
 	  }
 	};
 
@@ -94,20 +94,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	var Operator = __webpack_require__(/*! rxjs */ 3).Operator;
+	var Observable = __webpack_require__(/*! rxjs */ 3).Observable;
 	
 	/**
 	 * Create a subclass of `Rx.Operator` that includes the given operators.
 	 * @param {object} operators A hash of operator functions
-	 * @returns {class} A subclass that includes the given operators
+	 * @returns {function} A subclass that includes the given operators
 	 */
 	function subclassWith(operators) {
 	  var Subclass = function Subclass() {
-	    Operator.apply(this, Array.prototype.slice.call(arguments));
+	    Observable.apply(this, Array.prototype.slice.call(arguments));
 	  };
 	
-	  Subclass.prototype = Object.create(Operator);
-	  Subclass.prototype.constructor = Operator;
+	  Subclass.prototype = Object.create(Observable.prototype);
+	  Subclass.prototype.constructor = Subclass;
 	  Subclass.prototype.lift = lift;
 	
 	  for (var key in operators) {
@@ -143,83 +143,165 @@ return /******/ (function(modules) { // webpackBootstrap
 /*!******************************!*\
   !*** ./operator/behavior.js ***!
   \******************************/
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
+	
+	var Observable = __webpack_require__(/*! rxjs */ 3).Observable;
+	
+	var toObservable = __webpack_require__(/*! ./to-observable */ 5);
 	
 	/**
 	 * Represents a value that changes over time. Observers can subscribe to the subject to receive the last (or initial)
 	 * value and all subsequent notifications, unless or until the source Observable is complete.
 	 *
-	 * @param {*} [initialValue] Optional value to use when invalid (defaults to `undefined`)
+	 * @this {Observable}
+	 * @param {function():*|*} [initialValue] Optional value to use when invalid or factory thereof (default `undefined`)
 	 * @param {Scheduler} [scheduler] Optional scheduler for internal use
 	 * @returns {Observable} An observable with additional `clear()` method and `isValid:boolean` field
 	 */
-	function behaviorOperator(initialValue, scheduler) {
+	function behavior(initialValue, scheduler) {
+	  /* jshint validthis:true */
 	  var currentValue,
-	      isDisposed;
+	      isAssigned  = false,
+	      isDisposed  = false,
+	      upstreamObs = this;
 	
 	  // shared by all subscribers
-	  var sourceObs = this.do(store, undefined, dispose);
+	  var sourceObs = upstreamObs
+	    .do(store, undefined, dispose);
 	
-	  var clearObserver,
-	      clearObs = Rx.Observable.create(function (observer) {
-	        clearObserver = observer;
-	      });
+	  var clearStim,
+	      clearObs = Observable.create(function (instance) {
+	        if (isDisposed) {
+	          instance.complete();
+	        }
+	        else {
+	          clearStim = instance;
+	        }
+	      }, scheduler);
 	
-	  var sharedObs = Rx.Observable.merge(sourceObs, clearObs);
+	  var sharedObs = Observable.merge(sourceObs, clearObs, scheduler);
 	
-	  // factory an observable for each subscriber
-	  var result = Rx.Observable.defer(function () {
+	  // ensure that new subscribers are notified COMPLETE if the instance is disposed
+	  var resultObs = Observable.defer(function () {
 	    return isDisposed ?
-	      Rx.Observable.empty() :
-	      Rx.Observable.merge(Rx.Observable.of(currentValue || initialValue), sharedObs);
+	      Observable.empty() :
+	      Observable.merge(Observable.of(getStartValue()), sharedObs, scheduler);
 	  });
 	
+	  // ensure the result is the correct type
+	  var castResultObs = toObservable.call(resultObs, upstreamObs.constructor);
+	
 	  // composition
-	  return Object.defineProperties(result, {
+	  return Object.defineProperties(castResultObs, {
 	    clear     : {value: clear},
 	    getIsValid: {value: getIsValid},
 	    isValid   : {get: getIsValid}
 	  });
 	
 	  function store(value) {
+	    isAssigned = true;
 	    currentValue = value;
 	  }
 	
 	  function clear() {
-	    currentValue = undefined;
-	    clearObserver.next(initialValue);
+	    if (!isDisposed) {
+	      isAssigned = false;
+	      currentValue = undefined;
+	      clearStim.next(getInitialValue());
+	    }
 	  }
 	
 	  function dispose() {
 	    if (!isDisposed) {
 	      isDisposed = true;
-	      currentValue = null;
-	      clearObserver.complete();
 	
+	      isAssigned = false;
+	      currentValue = undefined;
+	      if (clearStim) {
+	        clearStim.complete();
+	      }
+	
+	      upstreamObs = null;
 	      sourceObs = null;
-	      clearObserver = clearObs = null;
+	      clearStim = clearObs = null;
 	      sharedObs = null;
-	      result = null;
+	      resultObs = null;
+	      castResultObs = null;
 	    }
 	  }
 	
 	  function getIsValid() {
-	    return !isDisposed && (currentValue !== initialValue);
+	    return !isDisposed && (currentValue !== getInitialValue());
+	  }
+	
+	  function getStartValue() {
+	    return isDisposed ? undefined : isAssigned ? currentValue : getInitialValue();
+	  }
+	
+	  function getInitialValue() {
+	    return (typeof initialValue === 'function') ? initialValue() : initialValue;
 	  }
 	}
 	
-	module.exports = behaviorOperator;
+	module.exports = behavior;
 
 /***/ },
 /* 5 */
+/*!***********************************!*\
+  !*** ./operator/to-observable.js ***!
+  \***********************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var Observable = __webpack_require__(/*! rxjs */ 3).Observable;
+	
+	/**
+	 * Transform the current Observable to an Observable with a different class implementation.
+	 * Where it is already of the same `constructor` then the current instance is returned unchanged.
+	 *
+	 * @this {Observable}
+	 * @param Subclass A subclass of `Observable` to cast the observable to
+	 * @returns An instance of the given class
+	 */
+	function toObservable(Subclass) {
+	  /* jshint validthis:true */
+	
+	  // any subclass of Observable or Observable itself is valid
+	  var isValid = (typeof Subclass === 'function') && !!Subclass.prototype && (typeof Subclass.prototype === 'object') &&
+	    ((Subclass === Observable) || (Subclass.prototype instanceof Observable));
+	
+	  // invalid argument
+	  if (!isValid) {
+	    throw new TypeError('given argument must be a subclass of Rx.Observable');
+	  }
+	  // same class implies unchanged
+	  else if (Subclass.prototype.isPrototypeOf(this)) {
+	    return this;
+	  }
+	  // mismatch implies new instance (similar to Observable.lift)
+	  else {
+	    var observable = new Subclass();
+	    observable.source = this;
+	    observable.operator = this.operator;
+	    return observable;
+	  }
+	}
+	
+	module.exports = toObservable;
+
+/***/ },
+/* 6 */
 /*!********************************!*\
   !*** ./operator/disposable.js ***!
   \********************************/
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
+	
+	var Observable = __webpack_require__(/*! rxjs */ 3).Observable;
 	
 	/**
 	 * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
@@ -230,25 +312,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * operator which you should consider as an alternative. This Subject is more convenient in the case where where you
 	 * want to terminate by simple function call, rather than an observable.
 	 *
+	 * @this {Observable}
 	 * @param [scheduler] Optional scheduler for internal use
 	 * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
 	 */
-	function disposableOperator(scheduler) {
+	function disposable(scheduler) {
 	  /* jshint validthis:true */
+	  var isDisposed,
+	      upstreamObs = this;
 	
 	  // force completion on disposal
-	  var isDisposed,
-	      disposeObserver,
-	      disposeObs = Rx.Observable.create(function (observer) {
-	        disposeObserver = observer;
-	      });
+	  var disposeObserver,
+	      disposeObs = Observable.create(function (observer) {
+	        if (isDisposed) {
+	          observer.complete();
+	        }
+	        else {
+	          disposeObserver = observer;
+	        }
+	      }, scheduler);
 	
-	  var result = this
+	  var resultObs = upstreamObs
 	    .do(undefined, undefined, dispose)
 	    .takeUntil(disposeObs);
 	
 	  // composition
-	  return Object.defineProperties(result, {
+	  return Object.defineProperties(resultObs, {
 	    dispose      : {value: dispose},
 	    getIsDisposed: {value: getIsDisposed},
 	    isDisposed   : {get: getIsDisposed}
@@ -257,11 +346,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  function dispose() {
 	    if (!isDisposed) {
 	      isDisposed = true;
-	      disposeObserver.next();
-	      disposeObserver.complete();
 	
+	      if (disposeObserver) {
+	        disposeObserver.next();
+	        disposeObserver.complete();
+	      }
+	
+	      upstreamObs = null;
 	      disposeObserver = disposeObs = null;
-	      result = null;
+	      resultObs = null;
 	    }
 	  }
 	
@@ -270,10 +363,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 	
-	module.exports = disposableOperator;
+	module.exports = disposable;
 
 /***/ },
-/* 6 */
+/* 7 */
 /*!*******************************!*\
   !*** ./operator/lifecycle.js ***!
   \*******************************/
@@ -281,95 +374,125 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	var behaviorOperator = __webpack_require__(/*! ./behavior */ 4);
+	var Observable = __webpack_require__(/*! rxjs */ 3).Observable;
+	
+	var behavior      = __webpack_require__(/*! ./behavior */ 4),
+	    toObservable  = __webpack_require__(/*! ./to-observable */ 5),
+	    hookSubscribe = __webpack_require__(/*! ../utility/hook-subscribe */ 8);
 	
 	/**
 	 * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
 	 * notifications, unless or until the source Observable is complete. It is possible to observe the number of
 	 * subscriptions to the Subject.
 	 *
+	 * @this {Observable}
 	 * @param [scheduler] Optional scheduler for internal use
 	 * @returns {Observable} An observable with additional `lifecycle:Observable` field
 	 */
-	function lifecycleOperator(scheduler) {
+	function lifecycle(scheduler) {
 	  /* jshint validthis:true */
-	  var isDisposed;
+	  var isDisposed,
+	      upstreamObs = this,
+	      count       = 0;
 	
-	  // reference-count lifecycle observable
-	  var countObserver,
-	      countObs         = Rx.Observable.create(function (observer) {
-	        countObserver = observer;
-	      }),
-	      countBehaviorObs = behaviorOperator.call(countObs, 0);
+	  // reference-count lifecycle behavior observable of the same type
+	  var countStim,
+	      countObs         = Observable.create(function (instance) {
+	        if (isDisposed) {
+	          instance.complete();
+	        }
+	        else {
+	          countStim = instance;
+	        }
+	      }, scheduler),
+	      countBehaviorObs = behavior.call(countObs, getCount, scheduler),
+	      countCastObs     = toObservable.call(countBehaviorObs, this.constructor);
 	
 	  // publish single observable for all subscribers
-	  var result = this
-	    .do(undefined, undefined, dispose)
-	    .publish()
-	    .refCount();
+	  var sharedObs = upstreamObs.do(undefined, undefined, dispose).publish().refCount();
+	
+	  // hook the subscribe/unsubscribe methods to get a live reference count
+	  hookSubscribe(sharedObs, onCount);
+	
+	  // ensure that new subscribers are notified COMPLETE if the instance is disposed
+	  var resultObs = Observable.defer(function () {
+	    return isDisposed ? Observable.empty() : sharedObs;
+	  });
+	
+	  // ensure the result is the correct type
+	  var castResultObs = toObservable.call(resultObs, upstreamObs.constructor);
 	
 	  // composition
-	  return Object.defineProperties(hookSubscribe(result), {
-	    lifecycle: {value: countBehaviorObs}
+	  return Object.defineProperties(castResultObs, {
+	    lifecycle: {value: countCastObs}
 	  });
 	
 	  function dispose() {
 	    if (!isDisposed) {
 	      isDisposed = true;
-	      countObserver.complete();
 	
-	      countObserver = countObs = countBehaviorObs = null;
-	      result = null;
+	      if (countStim) {
+	        countStim.complete();
+	      }
+	
+	      upstreamObs = null;
+	      countStim = countObs = countBehaviorObs = countCastObs = null;
+	      resultObs = null;
 	    }
 	  }
 	
-	  function hookSubscribe(connectableObs) {
-	    var _subscribe = connectableObs._subscribe;
-	
-	    connectableObs._subscribe = function subscribe(subscriber) {
-	      var subscription = _subscribe.call(connectableObs, subscriber);
-	      if (countObserver) {
-	        countObserver.next(countable.refCount);
+	  function onCount(value) {
+	    if (value !== count) {
+	      count = value;
+	      if (countStim) {
+	        countStim.next(count);
 	      }
+	    }
+	  }
 	
-	      var _unsubscribe = subscription._unsubscribe;
-	
-	      subscription._unsubscribe = function unsubscribe() {
-	        _unsubscribe.call(subscription);
-	        if (countObserver) {
-	          countObserver.next(countable.refCount - 1);
-	        }
-	      };
-	      return subscription;
-	    };
-	
-	    return connectableObs;
+	  function getCount() {
+	    return count;
 	  }
 	}
 	
-	module.exports = lifecycleOperator;
+	module.exports = lifecycle;
 
 /***/ },
-/* 7 */
+/* 8 */
 /*!***********************************!*\
-  !*** ./operator/to-observable.js ***!
+  !*** ./utility/hook-subscribe.js ***!
   \***********************************/
 /***/ function(module, exports) {
 
 	'use strict';
 	
 	/**
-	 * Transform the current Observable to an Observable with a different class implementation.
+	 * Hook the subscribe and unscubscribe methods of a ConnectableObservable.
 	 *
-	 * @param subclass A subclass of `Observable` to cast the observable to
-	 * @returns An instance of the given class
+	 * @param {ConnectableObservable} connectableObs The observable to intercept
+	 * @param {function({number})} callback A method to call with the current reference count
+	 * @returns {ConnectableObservable} The observable that was given
 	 */
-	function toObservableOperator(subclass) {
-	  /* jshint validthis:true */
-	  return subclass.lift.call(this, this.operator);
+	function hookSubscribe(connectableObs, callback) {
+	  var _subscribe = connectableObs._subscribe;
+	
+	  connectableObs._subscribe = function subscribe(subscriber) {
+	    var subscription = _subscribe.call(connectableObs, subscriber);
+	    callback(connectableObs.refCount);
+	
+	    var _unsubscribe = subscription._unsubscribe;
+	
+	    subscription._unsubscribe = function unsubscribe() {
+	      _unsubscribe.call(subscription);
+	      callback(connectableObs.refCount);
+	    };
+	    return subscription;
+	  };
+	
+	  return connectableObs;
 	}
 	
-	module.exports = toObservableOperator;
+	module.exports = hookSubscribe;
 
 /***/ }
 /******/ ])

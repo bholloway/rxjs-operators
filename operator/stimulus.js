@@ -58,8 +58,7 @@ function constructor(source, subject) {
 
   // create the multicast instance for the RefCountObservable
   var refCountObservable = getRefCountObservable(),
-      monitored          = source,//.do(undefined, undefined, this.dispose.bind(this)),
-      multicasted        = multicast.call(monitored, subject);
+      multicasted        = multicast.call(source, subject);
 
   // super()
   refCountObservable.constructor.call(this, multicasted);

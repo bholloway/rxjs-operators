@@ -55,7 +55,9 @@ disposableObservable.dispose()
 
 ## Reference
 
-### `utility.subclassWith(operators, [BaseClass], [constructor]) : Class`
+### utility
+
+#### `utility.subclassWith(operators, [BaseClass], [constructor]) : Class`
 
 Create a subclass of `Rx.Observable`, or the given `BaseClass`, that includes the given operators.
 
@@ -68,7 +70,9 @@ Implements instance `lift()` and static `from()` methods.
 
 While `operators` values are typically `function`, they may also be a descriptor `object` per [Object.defineProperty()](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty).
 
-### `operator.behavior([initialValue], [scheduler]) : Observable`
+### operator
+
+#### `operator.behavior([initialValue], [scheduler]) : Observable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive the **last (or initial) value** and all subsequent notifications, unless or until the source Observable is complete.
 
@@ -82,7 +86,7 @@ Exposes an `isValid` flag which negates any time the current value is the `initi
 
 ![operator.behavior](operator/behavior.png)
 
-### `operator.disposable([subject]) : LifecycleObservable`
+#### `operator.disposable([subject]) : LifecycleObservable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable (if given) is complete. May be explicitly completed using an exposed `dispose()` method.
 
@@ -104,7 +108,7 @@ There is some duplication with the [`takeUntil()` operator](http://reactivex.io/
 
 This operator is more convenient in the case where where you want to terminate by simple function call, rather than an observable. If you find you are iterating over observables and calling `.dispose()` then you should compose with `.takeUntil(kill)` and a single `kill:Observable` instead.
 
-### `operator.stimulus([subject]) : StimulusObservable`
+#### `operator.stimulus([subject]) : StimulusObservable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable (if given) is complete. May be explicitly control Observable output using the exposed `next()`, `error()`, and `complete()` methods.
 
@@ -126,7 +130,7 @@ There is some duplication with the [`takeUntil()` operator](http://reactivex.io/
 
 This operator is more convenient in the case where where you want to terminate by simple function call, rather than an observable. If you find you are iterating over observables and calling `.dispose()` then you should compose with `.takeUntil(kill)` and a single `kill:Observable` instead.
 
-### `operator.lifecycle() : LifecycleObservable`
+#### `operator.lifecycle() : LifecycleObservable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
 

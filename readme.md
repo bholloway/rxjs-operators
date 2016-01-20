@@ -72,13 +72,12 @@ While `operators` values are typically `function`, they may also be a descriptor
 
 ### operator
 
-#### `operator.behavior([initialValue], [scheduler]) : Observable`
+#### `operator.behavior([initialValue]) : BehaviorObservable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive the **last (or initial) value** and all subsequent notifications, unless or until the source Observable is complete.
 
-* **@param** `[initialValue : function():*|*]` Optional value to use when invalid or factory thereof (default `undefined`)
-* **@param** `[scheduler : Scheduler]` Optional scheduler for internal use
-* **@returns** `: Observable` An observable with additional `clear()` method and `isValid:boolean` field
+* **@param** `[initialValue : *]` Optional value to use when invalid (default `undefined`)
+* **@returns** `: BehaviorObservable` An observable with additional `clear()` method and `isValid:boolean` field
 
 Exposes a `clear()` method that will re-instate the `initialValue`.
 

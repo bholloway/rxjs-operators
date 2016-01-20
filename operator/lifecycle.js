@@ -11,14 +11,18 @@ var subclassWith = require('../utility/subclass-with');
  * subscriptions to the Subject.
  *
  * @this {Observable}
- * @returns {Observable} An observable with additional `lifecycle:Observable` field
+ * @returns {LifecycleObservable} A RefCountObservable with additional `lifecycle:Observable` field
  */
 function lifecycle() {
   /* jshint validthis:true */
+
+  // create a sub-class of RefCountObservable
+  //  infer the RefCountObservable class definition by one of its instances
   var refCountObservable  = getRefCountObservable(),
       LifecycleObservable = subclassWith({
         lifecycle: {get: getLifecycle}
       }, refCountObservable.constructor, constructor);
+
   return new LifecycleObservable(this);
 }
 
@@ -28,6 +32,9 @@ function getRefCountObservable() {
   return (new Rx.ConnectableObservable()).refCount();
 }
 
+/**
+ * Constructor for the LifecycleObservable class
+ */
 function constructor(source) {
   /* jshint validthis:true */
 
@@ -47,11 +54,17 @@ function constructor(source) {
   refCountObservable.constructor.call(this, multicasted);
 }
 
+/**
+ * Getter for the LifecycleObservable instance `lifecycle` property
+ */
 function getLifecycle() {
   /* jshint validthis:true */
   return this._lifecycle;
 }
 
+/**
+ * Monkey-patch _subscribe method and defer to the RefCountObservable superclass
+ */
 function _subscribe(subscriber) {
   /* jshint validthis:true */
   var that = this;
@@ -63,6 +76,7 @@ function _subscribe(subscriber) {
 
   var _unsubscribe = subscription._unsubscribe.bind(subscription);
 
+  // money-patch _unsubscribe() and defer to the subscrition
   subscription._unsubscribe = function unsubscribe() {
     _unsubscribe(subscription);
     that._countStimulus.next(that.refCount);

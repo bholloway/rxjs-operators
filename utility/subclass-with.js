@@ -3,7 +3,10 @@
 var Observable = require('rxjs').Observable;
 
 /**
- * Create a subclass of `Rx.Operator` that includes the given operators.
+ * Create a subclass of `Rx.Observable`, or the given `BaseClass`, that includes the given operators.
+ *
+ * Implements instance `lift()` and static `from()` methods.
+ *
  * @param {object} operators A hash of operator functions or property definitions for the prototype
  * @param {Class} [BaseClass] Optional subclass of Observable to use as the base class
  * @param {function} [constructor] Optional constructor implementation

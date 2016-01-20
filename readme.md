@@ -6,7 +6,7 @@ A library of operators for RxJS
 
 ## Usage
 
-In all cases this library does **not add operators to Observable**. You need to do extra work to create an Observable with these operators.
+In all cases this library does **not add operators to Rx.Observable**. You need to do extra work to create an Observable with these operators.
 
 You may either:
  * Use the whole package to get a hash `object` of all `rxOperators.operator.*` and `rxOperators.utility.*`.
@@ -16,10 +16,11 @@ The operators are simply `function` that expect `this` to be the **upstream** `O
 
 To use the operators you should either:
 
- * Create your own `Observable` implementation using `utility.subclassWith(operators)`.
+ * Create your own `Observable` implementation using `utility.subclassWith(operators)`.  The resulting class implements the necessary `lift()` and `from()` methods and all the given operators.
+
  * Use any of the [options listed in the documentation](https://github.com/ReactiveX/RxJS/blob/master/doc/operator-creation.md#adding-the-operator-to-observable).
 
-Note that the author considers it poor practice to monkey patch `Observable.prototype` per Option 3 as it creates a global namespace in which it will be [easy to conflict with other libraries](https://github.com/ReactiveX/RxJS/issues/1207#issue-127133307). However you may find it useful to do this for operator `toObservable()` otherwise you will have to duplicate all of the `Observable` static methods.
+Note that the author considers it poor practice to monkey patch `Observable.prototype` per Option 3 as it creates a global namespace in which it will be [easy to conflict with other libraries](https://github.com/ReactiveX/RxJS/issues/1207#issue-127133307).
 
 For example:
 
@@ -27,49 +28,53 @@ Import everthing
 ```
 var rxOperators  = require('rx-operators');
 var MyObservable = rxOperators.utility.subclassWith({
-  disposable: MyObservable.operators.disposable
+  disposable: MyObservable.operators.disposable,
+  ...
 });
-Operator.prototype.toObservable = rxOperators.rxOperators;
 ```
 
 or import selectively
 ```
-var subclassWith = require('rx-operators/utility/subclass-with');
+var subclassWith = require('rx-operators/utility/subclass-with'),
+    disposable   = require('rx-operators/operators/disposable');
+	
 var MyObservable = subclassWith({
-  disposable: require('rx-operators/operators/disposable')
+  disposable: disposable,
+  ...
 });
-Operator.prototype.toObservable = require('rx-operators/utility/to-observable');
 ```
 
-then use
+then use the RxJS `let()` operator to cast any Observable
 ```
-var observable = Observable.create(...)
-  .toObservable(MyObservable)
+var disposableObservable = anyObservable
+  .let(MyObservable.from)
   .disposable();
 ...
-observable.dispose()
+disposableObservable.dispose()
 ```
 
 ## Reference
 
 ### `utility.subclassWith(operators, [BaseClass], [constructor]) : Class`
 
-Create a subclass of `Rx.Observable` that includes the given operators.
-
-* **@param** `operators : object` A hash of operator functions or property definitions for the prototype
-* **@param** `[BaseClass] : Class` Optional subclass of Observable to use as the base class
-* **@param** `[constructor] : function` Optional constructor implementation
-* **@returns** `:Class` A subclass of Observable that includes the given operators
+Create a subclass of `Rx.Observable`, or the given `BaseClass`, that includes the given operators.
 
 Implements instance `lift()` and static `from()` methods.
+
+* **@param** `operators : object` A hash of operator functions or property definitions for the prototype
+* **@param** `[BaseClass : Class]` Optional subclass of Observable to use as the base class (default Observable)
+* **@param** `[constructor : function]` Optional constructor implementation (default BaseClass)
+* **@returns** `: Class` A subclass of Observable that includes the given operators
+
+While `operators` values are typically `function`, they may also be a descriptor `object` per [Object.defineProperty()](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty).
 
 ### `operator.behavior([initialValue], [scheduler]) : Observable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive the **last (or initial) value** and all subsequent notifications, unless or until the source Observable is complete.
 
-* **@param** `[initialValue] : function():*|*` Optional value to use when invalid or factory thereof (default `undefined`)
-* **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
-* **@returns** `:Observable` An observable with additional `clear()` method and `isValid:boolean` field
+* **@param** `[initialValue : function():*|*]` Optional value to use when invalid or factory thereof (default `undefined`)
+* **@param** `[scheduler : Scheduler]` Optional scheduler for internal use
+* **@returns** `: Observable` An observable with additional `clear()` method and `isValid:boolean` field
 
 Exposes a `clear()` method that will re-instate the `initialValue`.
 
@@ -77,14 +82,14 @@ Exposes an `isValid` flag which negates any time the current value is the `initi
 
 ![operator.behavior](operator/behavior.png)
 
-### `operator.disposable([scheduler]) : Observable`
+### `operator.disposable([scheduler]) : LifecycleObservable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete or the Subject is **disposed**.
 
-This operator introduces a `complete` that will all down-stream observables to also complete and any disposal lifecycle hooks (i.e. `.using()`) to therefore fire.
+This operator introduces a `complete` that will cause all down-stream observables to also complete and any disposal lifecycle hooks (i.e. `.using()`) to therefore fire.
 
-* **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
-* **@returns** `:Observable` An observable with additional `dispose()` method and `isComplete:boolean` field
+* **@param** `[scheduler : Scheduler]` Optional scheduler for internal use
+* **@returns** `: Observable` An observable with additional `dispose()` method and `isComplete:boolean` field
 
 Exposes a `dispose()` method which causes the Subject to `complete` if it has not already done so.
 
@@ -100,10 +105,10 @@ This operator is more convenient in the case where where you want to terminate b
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
 
-* **@returns** `:LifecycleObservable` An observable with an additional `lifecycle:Observable` field
+* **@returns** `: LifecycleObservable` A RefCountObservable with additional `lifecycle:Observable` field
 
 The `LifecycleObservable` inherits from `RefCountObservable`.
- 
+
 It exposes a `lifecycle` Observable which tracks the number of subscriptions to the Observable proper. It will complete when the source Observable completes and it is a behavior (see above) in that all new subscriptions will immediately receive the current reference count as their first value, unless or until the source Observable is complete.
 
 ![operator.lifecycle](operator/lifecycle.png)

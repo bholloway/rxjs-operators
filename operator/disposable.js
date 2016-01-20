@@ -69,7 +69,7 @@ function constructor(source, subject) {
 }
 
 /**
- * Getter for the LifecycleObservable instance `lifecycle` property
+ * Getter for the DisposableObservable instance `lifecycle` property
  */
 function getIsDisposed() {
   /* jshint validthis:true */
@@ -77,7 +77,7 @@ function getIsDisposed() {
 }
 
 /**
- * Trigger complete() on the Observable
+ * Notify complete on the DisposableObservable instance
  */
 function dispose() {
   /* jshint validthis:true */

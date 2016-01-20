@@ -68,7 +68,7 @@ function constructor(source, subject) {
 }
 
 /**
- * Trigger next() on the Observable
+ * Notify next on the StimulusObservable instance
  */
 function next(value) {
   /* jshint validthis:true */
@@ -76,7 +76,7 @@ function next(value) {
 }
 
 /**
- * Trigger error() on the Observable
+ * Notify error on the StimulusObservable instance
  */
 function error(value) {
   /* jshint validthis:true */
@@ -84,7 +84,7 @@ function error(value) {
 }
 
 /**
- * Trigger complete() on the Observable
+ * Notify complete on the StimulusObservable instance
  */
 function complete() {
   /* jshint validthis:true */

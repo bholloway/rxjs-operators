@@ -3,12 +3,13 @@
 var VirtualTimeScheduler = require('rxjs/scheduler/VirtualTimeScheduler').VirtualTimeScheduler;
 
 var subclassWith = require('../utility/subclass-with'),
+    stimulus     = require('../utility/stimulus'),
     lifecycle    = require('./lifecycle');
 
 describe('lifecycle', function () {
   var Observable,
       observable,
-      stimulus,
+      upstream,
       scheduler,
       output;
 
@@ -25,20 +26,13 @@ describe('lifecycle', function () {
   });
 
   beforeEach(function () {
-    observable = new Observable(function (instance) {
-      stimulus = instance;
-    });
-    var subscription = observable
-      .subscribeOn(scheduler)
-      .subscribe(function () {
-      });
-    scheduler.flush();
-    subscription.unsubscribe();
-    scheduler.flush();
+    upstream = stimulus();
+    observable = upstream
+      .let(Observable.from);
   });
 
   beforeEach(function () {
-    output = output || observable.lifecycle(scheduler);
+    output = output || observable.lifecycle();
   });
 
   describe('lifecycle observable', function () {
@@ -84,14 +78,14 @@ describe('lifecycle', function () {
         var outputObserver = getObserver();
         subscribeToOutput(outputObserver);
         scheduler.flush();
-        stimulus.complete();
+        upstream.complete();
         scheduler.flush();
         expect(outputObserver.complete).toHaveBeenCalled();
         expect(lifecycleObserver.complete).toHaveBeenCalled();
       });
 
       it('should occur when the upstream observable is already COMPLETE', function () {
-        stimulus.complete();
+        upstream.complete();
         scheduler.flush();
 
         var outputObserver = getObserver();
@@ -152,7 +146,7 @@ describe('lifecycle', function () {
         scheduler.flush();
 
         var value = Math.random();
-        stimulus.next(value);
+        upstream.next(value);
         scheduler.flush();
         expect(outputObserver.next).toHaveBeenCalledWith(value);
       });
@@ -164,14 +158,14 @@ describe('lifecycle', function () {
         subscribeToOutput(outputObserver);
         scheduler.flush();
 
-        stimulus.complete();
+        upstream.complete();
         scheduler.flush();
 
         expect(outputObserver.complete).toHaveBeenCalled();
       });
 
       it('should occur when the upstream observable is already COMPLETE', function () {
-        stimulus.complete();
+        upstream.complete();
         scheduler.flush();
 
         subscribeToOutput(outputObserver);

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "use": "source $NVM_DIR/nvm.sh; nvm use 4.0.0;",
-    "test": "npm run use; node_modules/jasmine-node/bin/jasmine-node --verbose --captureExceptions ./operator",
+    "test": "npm run use; node ./jasmine.js",
     "build": "npm run use; webpack -d"
   },
   "repository": {
@@ -25,10 +25,11 @@
     "url": "https://github.com/bholloway/rx-operators/issues"
   },
   "homepage": "https://github.com/bholloway/rx-operators",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
-    "jasmine-node": "2.0.0-beta4",
+    "figures": "^1.4.0",
+    "jasmine": "^2.4.1",
+    "jasmine-spec-reporter": "^2.4.0",
     "rxjs": "^5.0.0-beta.1"
   }
 }

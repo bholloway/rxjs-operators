@@ -1,10 +1,9 @@
 'use strict';
 
-var Observable = require('rxjs').Observable;
+var Rx        = require('rxjs'),
+    multicast = require('rxjs/operator/multicast').multicast;
 
-var behavior      = require('./behavior'),
-    toObservable  = require('./to-observable'),
-    hookSubscribe = require('../utility/hook-subscribe');
+var subclassWith = require('../utility/subclass-with');
 
 /**
  * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
@@ -12,73 +11,59 @@ var behavior      = require('./behavior'),
  * subscriptions to the Subject.
  *
  * @this {Observable}
- * @param [scheduler] Optional scheduler for internal use
  * @returns {Observable} An observable with additional `lifecycle:Observable` field
  */
-function lifecycle(scheduler) {
+function lifecycle() {
   /* jshint validthis:true */
-  var isDisposed,
-      upstreamObs = this,
-      count       = 0;
-
-  // reference-count lifecycle behavior observable of the same type
-  var countStim,
-      countObs         = Observable.create(function (instance) {
-        if (isDisposed) {
-          instance.complete();
-        }
-        else {
-          countStim = instance;
-        }
-      }, scheduler),
-      countBehaviorObs = behavior.call(countObs, getCount, scheduler),
-      countCastObs     = toObservable.call(countBehaviorObs, this.constructor);
-
-  // publish single observable for all subscribers
-  var sharedObs = upstreamObs.do(undefined, undefined, dispose).publish().refCount();
-
-  // hook the subscribe/unsubscribe methods to get a live reference count
-  hookSubscribe(sharedObs, onCount);
-
-  // ensure that new subscribers are notified COMPLETE if the instance is disposed
-  var resultObs = Observable.defer(function () {
-    return isDisposed ? Observable.empty() : sharedObs;
-  });
-
-  // ensure the result is the correct type
-  var castResultObs = toObservable.call(resultObs, upstreamObs.constructor);
-
-  // composition
-  return Object.defineProperties(castResultObs, {
-    lifecycle: {value: countCastObs}
-  });
-
-  function dispose() {
-    if (!isDisposed) {
-      isDisposed = true;
-
-      if (countStim) {
-        countStim.complete();
-      }
-
-      upstreamObs = null;
-      countStim = countObs = countBehaviorObs = countCastObs = null;
-      resultObs = null;
-    }
-  }
-
-  function onCount(value) {
-    if (value !== count) {
-      count = value;
-      if (countStim) {
-        countStim.next(count);
-      }
-    }
-  }
-
-  function getCount() {
-    return count;
-  }
+  var RefCountObservable  = getDefinitionRefCountObservable(),
+      LifecycleObservable = subclassWith({
+        lifecycle: {get: getLifecycle}
+      }, RefCountObservable, constructor);
+  return new LifecycleObservable(this);
 }
 
 module.exports = lifecycle;
+
+function getDefinitionRefCountObservable() {
+  return (new Rx.ConnectableObservable()).refCount().constructor;
+}
+
+function constructor(source) {
+  /* jshint validthis:true */
+
+  // super()
+  getDefinitionRefCountObservable().call(this, multicast.call(source, new Rx.Subject()));
+
+  // private members
+  this._subscribe = _subscribe;
+
+  this._countStimulus = new Rx.BehaviorSubject(0);
+
+  this._lifecycle = Rx.Observable.never()
+    .takeUntil(source)
+    .multicast(this._countStimulus)
+    .refCount();
+}
+
+function getLifecycle() {
+  /* jshint validthis:true */
+  return this._lifecycle;
+}
+
+function _subscribe(subscriber) {
+  /* jshint validthis:true */
+  var that = this;
+
+  // call super._subscribe()
+  var subscription = Object.getPrototypeOf(Object.getPrototypeOf(this))
+    ._subscribe.call(this, subscriber);
+  that._countStimulus.next(that.refCount);
+
+  var _unsubscribe = subscription._unsubscribe.bind(subscription);
+
+  subscription._unsubscribe = function unsubscribe() {
+    _unsubscribe(subscription);
+    that._countStimulus.next(that.refCount);
+  };
+  return subscription;
+}

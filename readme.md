@@ -52,12 +52,16 @@ observable.dispose()
 
 ## Reference
 
-### `utility.subclassWith(operators) : Class`
+### `utility.subclassWith(operators, [BaseClass], [constructor]) : Class`
 
-Create a subclass of `Rx.Operator` that includes the given operators.
+Create a subclass of `Rx.Observable` that includes the given operators.
 
-* **@param** `operators : object` A hash of operator functions
-* **@returns** `:Class` A subclass that includes the given operators
+* **@param** `operators : object` A hash of operator functions or property definitions for the prototype
+* **@param** `[BaseClass] : Class` Optional subclass of Observable to use as the base class
+* **@param** `[constructor] : function` Optional constructor implementation
+* **@returns** `:Class` A subclass of Observable that includes the given operators
+
+Implements instance `lift()` and static `from()` methods.
 
 ### `operator.behavior([initialValue], [scheduler]) : Observable`
 
@@ -92,20 +96,14 @@ There is some duplication with the [`takeUntil()` operator](http://reactivex.io/
 
 This operator is more convenient in the case where where you want to terminate by simple function call, rather than an observable. If you find you are iterating over observables and calling `.dispose()` then you should compose with `.takeUntil(kill)` and a single `kill:Observable` instead.
 
-### `operator.lifecycle([scheduler]) : Observable`
+### `operator.lifecycle() : Observable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
 
-* **@param** `[scheduler] : Scheduler` Optional scheduler for internal use
-* **@returns** `:Observable` An observable with an additional `lifecycle:Observable` field
+* **@returns** `:LifecycleObservable` An observable with an additional `lifecycle:Observable` field
 
-Exposes a `lifecycle` Observable which tracks the number of subscriptions to the Subject proper. It will complete when the source `Observable` completes and it is a behavior (see above) in that all new subscriptions will immediately receive the current reference count as their first value, unless or until the source `observable` is complete.
+The `LifecycleObservable` inherits from `RefCountObservable`.
+ 
+It exposes a `lifecycle` Observable which tracks the number of subscriptions to the Observable proper. It will complete when the source Observable completes and it is a behavior (see above) in that all new subscriptions will immediately receive the current reference count as their first value, unless or until the source Observable is complete.
 
 ![operator.lifecycle](operator/lifecycle.png)
-
-### `operator.toObservable(Subclass) : Observable`
-
-Transform the current Observable to an Observable with a different class implementation. Where it is already of the same `constructor` then the current instance is returned unchanged.
-
-* **@param** `Subclass : Class` A subclass of `Observable` to cast the observable to
-* **@returns** `:Observable` An instance of the given class

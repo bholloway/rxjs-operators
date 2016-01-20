@@ -3,11 +3,10 @@
 var VirtualTimeScheduler = require('rxjs/scheduler/VirtualTimeScheduler').VirtualTimeScheduler;
 
 var subclassWith = require('../utility/subclass-with'),
-    stimulus     = require('./stimulus'),
-    disposable   = require('./disposable');
+    stimulus     = require('./stimulus');
 
-describe('operator.disposable', function () {
-  var DisposableObservable,
+describe('operator.stimulus', function () {
+  var StimulusObservable,
       observable,
       upstream,
       scheduler,
@@ -17,8 +16,8 @@ describe('operator.disposable', function () {
       outputSubscriptions = [];
 
   beforeAll(function () {
-    DisposableObservable = subclassWith({
-      disposable: disposable
+    StimulusObservable = subclassWith({
+      stimulus: stimulus
     });
   });
 
@@ -29,8 +28,8 @@ describe('operator.disposable', function () {
   beforeEach(function () {
     upstream = stimulus();
     observable = upstream
-      .let(DisposableObservable.from);
-    output = observable.disposable();
+      .let(StimulusObservable.from);
+    output = observable.stimulus();
   });
 
   beforeEach(function () {
@@ -47,6 +46,19 @@ describe('operator.disposable', function () {
 
       var value = Math.random();
       upstream.next(value);
+      scheduler.flush();
+
+      expect(outputObserver.next).toHaveBeenCalledWith(value);
+    });
+
+    it('should occur when the next() method is explicitly called', function () {
+      subscribeToOutput(outputObserver);
+      scheduler.flush();
+
+      expect(outputObserver.next).not.toHaveBeenCalled();
+
+      var value = Math.random();
+      output.next(value);
       scheduler.flush();
 
       expect(outputObserver.next).toHaveBeenCalledWith(value);
@@ -81,13 +93,13 @@ describe('operator.disposable', function () {
       expect(outputObserver.complete).toHaveBeenCalled();
     });
 
-    it('should occur on explicit dispose()', function () {
+    it('should occur on explicit complete()', function () {
       subscribeToOutput(outputObserver);
       scheduler.flush();
 
       expect(outputObserver.complete).not.toHaveBeenCalled();
 
-      output.dispose();
+      output.complete();
       scheduler.flush();
 
       expect(outputObserver.complete).toHaveBeenCalled();

@@ -1,12 +1,13 @@
 'use strict';
 
-var VirtualTimeScheduler = require('rxjs/scheduler/VirtualTimeScheduler').VirtualTimeScheduler;
+var Observable           = require('rxjs').Observable,
+    VirtualTimeScheduler = require('rxjs/scheduler/VirtualTimeScheduler').VirtualTimeScheduler;
 
 var subclassWith = require('../utility/subclass-with'),
     stimulus     = require('./stimulus'),
     lifecycle    = require('./lifecycle');
 
-describe('lifecycle', function () {
+describe('operator.lifecycle', function () {
   var LifecycleObservable,
       observable,
       upstream,
@@ -29,9 +30,17 @@ describe('lifecycle', function () {
     var lifecycleObserver,
         lifecycleSubscription;
 
-    describe('notify NEXT', function () {
+    beforeAll(newInstance);
 
-      beforeAll(newInstance);
+    it('should be an instance of Observable', function () {
+      expect(output.lifecycle instanceof Observable).toBe(true);
+    });
+
+    it('should be an instance of RefCountObservable', function () {
+      expect(constructorName(output.lifecycle)).toBe('RefCountObservable');
+    });
+
+    describe('notify NEXT', function () {
 
       beforeEach(newLifecycleObserver);
 
@@ -138,15 +147,22 @@ describe('lifecycle', function () {
       outputObserver = getObserver();
     });
 
+    it('should be an instance of Observable', function () {
+      expect(output instanceof Observable).toBe(true);
+    });
+
     describe('notify NEXT', function () {
 
       it('should occur when the upstream observable notifies NEXT', function () {
         subscribeToOutput(outputObserver);
         scheduler.flush();
 
+        expect(outputObserver.next).not.toHaveBeenCalled();
+
         var value = Math.random();
         upstream.next(value);
         scheduler.flush();
+
         expect(outputObserver.next).toHaveBeenCalledWith(value);
       });
 
@@ -161,6 +177,8 @@ describe('lifecycle', function () {
         subscribeToOutput(outputObserver);
         scheduler.flush();
 
+        expect(outputObserver.complete).not.toHaveBeenCalled();
+
         upstream.complete();
         scheduler.flush();
 
@@ -170,6 +188,8 @@ describe('lifecycle', function () {
       it('should occur when the upstream observable is already COMPLETE', function () {
         upstream.complete();
         scheduler.flush();
+
+        expect(outputObserver.complete).not.toHaveBeenCalled();
 
         subscribeToOutput(outputObserver);
         scheduler.flush();
@@ -224,4 +244,10 @@ function getObserver(isDebug) {
   spyOn(observer, 'next').and.callThrough();
   spyOn(observer, 'complete').and.callThrough();
   return observer;
+}
+
+function constructorName(instance) {
+  var analysis = !!instance && (typeof instance === 'object') && (typeof instance.constructor === 'function') &&
+        Function.prototype.toString.call(instance.constructor).match(/function\s+(\w+)/);
+  return analysis ? analysis[1] : null;
 }

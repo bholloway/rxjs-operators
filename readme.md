@@ -82,33 +82,62 @@ Exposes an `isValid` flag which negates any time the current value is the `initi
 
 ![operator.behavior](operator/behavior.png)
 
-### `operator.disposable([scheduler]) : LifecycleObservable`
+### `operator.disposable([subject]) : LifecycleObservable`
 
-Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete or the Subject is **disposed**.
+Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable (if given) is complete. May be explicitly completed using an exposed `dispose()` method.
 
-This operator introduces a `complete` that will cause all down-stream observables to also complete and any disposal lifecycle hooks (i.e. `.using()`) to therefore fire.
+* **@this** : Observable|undefined
+* **@param** `[subject : Subject]` Optional existing Subject instance, similar to `multicast()` operator
+* **@returns** `: LifecycleObservable` A RefCountObservable with additional `dispose()` method and `isComplete:boolean` field
 
-* **@param** `[scheduler : Scheduler]` Optional scheduler for internal use
-* **@returns** `: Observable` An observable with additional `dispose()` method and `isComplete:boolean` field
+May be called as an unbound closure but will not subscribe to any source Observable.
+
+An optional `subject` may be provided to dictate the nature of the multicast output and/or provide explicit supplementary control of the Observable output. For example, pass `new Rx.BehaviorSubject()` to receive a **behavior** output.
 
 Exposes a `dispose()` method which causes the Subject to `complete` if it has not already done so.
 
 Exposes an `isDisposed` flag which indicates whether the Subject has completed.
 
-![cold.disposableSubject](operator/disposable.png)
+![operator.disposable](operator/disposable.png)
 
 There is some duplication with the [`takeUntil()` operator](http://reactivex.io/documentation/operators/takeuntil.html) which you should consider as an alternative.
 
 This operator is more convenient in the case where where you want to terminate by simple function call, rather than an observable. If you find you are iterating over observables and calling `.dispose()` then you should compose with `.takeUntil(kill)` and a single `kill:Observable` instead.
 
-### `operator.lifecycle() : Observable`
+### `operator.stimulus([subject]) : StimulusObservable`
+
+Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable (if given) is complete. May be explicitly control Observable output using the exposed `next()`, `error()`, and `complete()` methods.
+
+* **@this** : Observable|undefined
+* **@param** `[subject : Subject]` Optional existing Subject instance, similar to `multicast()` operator
+* **@returns** `: StimulusObservable` A RefCountObservable with additional `dispose()` method and `isComplete:boolean` field
+
+May be called as an unbound closure but will not subscribe to any source Observable.
+
+An optional `subject` may be provided to dictate the nature of the multicast output and/or provide explicit supplementary control of the Observable output. For example, pass `new Rx.BehaviorSubject()` to receive a  **behavior** output.
+
+Exposes a `dispose()` method which causes the Subject to `complete` if it has not already done so.
+
+Exposes an `isDisposed` flag which indicates whether the Subject has completed.
+
+![operator.stimulus](operator/stimulus.png)
+
+There is some duplication with the [`takeUntil()` operator](http://reactivex.io/documentation/operators/takeuntil.html) which you should consider as an alternative.
+
+This operator is more convenient in the case where where you want to terminate by simple function call, rather than an observable. If you find you are iterating over observables and calling `.dispose()` then you should compose with `.takeUntil(kill)` and a single `kill:Observable` instead.
+
+### `operator.lifecycle() : LifecycleObservable`
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
 
+* **@this** : Observable|undefined
+* **@param** `[subject : Subject]` Optional existing Subject instance, similar to `multicast()` operator
 * **@returns** `: LifecycleObservable` A RefCountObservable with additional `lifecycle:Observable` field
 
-The `LifecycleObservable` inherits from `RefCountObservable`.
+May be called as an unbound closure but will not subscribe to any source Observable.
 
-It exposes a `lifecycle` Observable which tracks the number of subscriptions to the Observable proper. It will complete when the source Observable completes and it is a behavior (see above) in that all new subscriptions will immediately receive the current reference count as their first value, unless or until the source Observable is complete.
+An optional `subject` may be provided to dictate the nature of the multicast output and/or provide explicit supplementary control of the Observable output. For example, pass `new Rx.BehaviorSubject()` to receive a **behavior** output.
+
+Exposes a `lifecycle` Observable which tracks the number of subscribers to the Observable proper. The `lifecycle` will complete when the source Observable completes. The `lifecycle` is a **behavior** in that all new subscriptions will immediately receive the current reference count as their first value, unless or until the source Observable is complete.
 
 ![operator.lifecycle](operator/lifecycle.png)

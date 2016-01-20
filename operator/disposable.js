@@ -1,65 +1,32 @@
 'use strict';
 
-var Observable = require('rxjs').Observable;
+var Rx = require('rxjs');
 
 /**
  * Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent
- * notifications, unless or until the source Observable is complete or the Subject is disposed.
- *
- * This Subject introduces a complete that will cause following operators in the observable chain to also complete,
- * and any disposal lifecycle hooks (i.e. `.using()`) will fire. There is some duplication with the `takeUntil()`
- * operator which you should consider as an alternative. This Subject is more convenient in the case where where you
- * want to terminate by simple function call, rather than an observable.
+ * notifications, unless or until the source Observable (if given) is complete. May be explicitly completed
+ * using an exposed `dispose()` method.
  *
  * @this {Observable}
- * @param [scheduler] Optional scheduler for internal use
- * @returns An observable with additional `dispose()` method and `isComplete:boolean` field
+ * @param {Subject} [subject] Optional existing Subject instance which provides a `complete()` method to manipulate
+ * @returns {RefCountObservable} An observable with additional `dispose()` method
  */
-function disposable(scheduler) {
+function disposable(subject) {
   /* jshint validthis:true */
-  var isDisposed,
-      upstreamObs = this;
 
-  // force completion on disposal
-  var disposeObserver,
-      disposeObs = Observable.create(function (observer) {
-        if (isDisposed) {
-          observer.complete();
-        }
-        else {
-          disposeObserver = observer;
-        }
-      }, scheduler);
+  subject = subject || new Rx.Subject();
 
-  var resultObs = upstreamObs
-    .do(undefined, undefined, dispose)
-    .takeUntil(disposeObs);
+  // ensure a valid observable
+  var hasThis  = !!this && (typeof this === 'object') && (this instanceof Rx.Observable),
+      upstream = hasThis ? this : Rx.Observable.never();
 
-  // composition
-  return Object.defineProperties(resultObs, {
-    dispose      : {value: dispose},
-    getIsDisposed: {value: getIsDisposed},
-    isDisposed   : {get: getIsDisposed}
+  var observable = upstream
+    .multicast(subject)
+    .refCount();
+
+  return Object.defineProperties(observable, {
+    dispose: {value: subject.complete.bind(subject)}
   });
-
-  function dispose() {
-    if (!isDisposed) {
-      isDisposed = true;
-
-      if (disposeObserver) {
-        disposeObserver.next();
-        disposeObserver.complete();
-      }
-
-      upstreamObs = null;
-      disposeObserver = disposeObs = null;
-      resultObs = null;
-    }
-  }
-
-  function getIsDisposed() {
-    return isDisposed;
-  }
 }
 
 module.exports = disposable;

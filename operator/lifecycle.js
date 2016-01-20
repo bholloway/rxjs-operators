@@ -38,6 +38,12 @@ function getRefCountObservable() {
 function constructor(source) {
   /* jshint validthis:true */
 
+  // super()
+  var refCountObservable = getRefCountObservable(),
+      monitored          = source.do(undefined, undefined, dispose),
+      multicasted        = multicast.call(monitored, new Rx.Subject());
+  refCountObservable.constructor.call(this, multicasted);
+
   // private members
   this._subscribe = _subscribe;
 
@@ -47,11 +53,9 @@ function constructor(source) {
     .multicast(countStimulus)
     .refCount();
 
-  // super()
-  var refCountObservable = getRefCountObservable(),
-      monitored          = source.do(undefined, undefined, countStimulus.complete.bind(countStimulus)),
-      multicasted        = multicast.call(monitored, new Rx.Subject());
-  refCountObservable.constructor.call(this, multicasted);
+  function dispose() {
+    countStimulus.complete();
+  }
 }
 
 /**

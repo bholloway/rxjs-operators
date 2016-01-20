@@ -3,7 +3,7 @@
 var VirtualTimeScheduler = require('rxjs/scheduler/VirtualTimeScheduler').VirtualTimeScheduler;
 
 var subclassWith = require('../utility/subclass-with'),
-    stimulus     = require('../utility/stimulus'),
+    stimulus     = require('./stimulus'),
     lifecycle    = require('./lifecycle');
 
 describe('lifecycle', function () {

@@ -15,34 +15,36 @@ var subclassWith = require('../utility/subclass-with');
  */
 function lifecycle() {
   /* jshint validthis:true */
-  var RefCountObservable  = getDefinitionRefCountObservable(),
+  var refCountObservable  = getRefCountObservable(),
       LifecycleObservable = subclassWith({
         lifecycle: {get: getLifecycle}
-      }, RefCountObservable, constructor);
+      }, refCountObservable.constructor, constructor);
   return new LifecycleObservable(this);
 }
 
 module.exports = lifecycle;
 
-function getDefinitionRefCountObservable() {
-  return (new Rx.ConnectableObservable()).refCount().constructor;
+function getRefCountObservable() {
+  return (new Rx.ConnectableObservable()).refCount();
 }
 
 function constructor(source) {
   /* jshint validthis:true */
 
-  // super()
-  getDefinitionRefCountObservable().call(this, multicast.call(source, new Rx.Subject()));
-
   // private members
   this._subscribe = _subscribe;
 
-  this._countStimulus = new Rx.BehaviorSubject(0);
+  var countStimulus = this._countStimulus = new Rx.BehaviorSubject(0);
 
   this._lifecycle = Rx.Observable.never()
-    .takeUntil(source)
-    .multicast(this._countStimulus)
+    .multicast(countStimulus)
     .refCount();
+
+  // super()
+  var refCountObservable = getRefCountObservable(),
+      monitored          = source.do(undefined, undefined, countStimulus.complete.bind(countStimulus)),
+      multicasted        = multicast.call(monitored, new Rx.Subject());
+  refCountObservable.constructor.call(this, multicasted);
 }
 
 function getLifecycle() {

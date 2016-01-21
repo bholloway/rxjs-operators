@@ -1,7 +1,8 @@
 'use strict';
 
-var Rx        = require('rxjs'),
-    multicast = require('rxjs/operator/multicast').multicast;
+var Rx                 = require('rxjs'),
+    multicast          = require('rxjs/operator/multicast').multicast,
+    RefCountObservable = (new Rx.ConnectableObservable()).refCount().constructor;
 
 var subclassWith = require('../utility/subclass-with');
 
@@ -27,25 +28,20 @@ var subclassWith = require('../utility/subclass-with');
 function disposable(subject) {
   /* jshint validthis:true */
 
-  // use this where available else use nothing
+  // use a degenerate observable where bound 'this' is not observable
   var source = !!this && (typeof this === 'object') && (this instanceof Rx.Observable) && this || Rx.Observable.never();
 
   // create a sub-class of RefCountObservable
   //  infer the RefCountObservable class definition by one of its instances
-  var refCountObservable   = getRefCountObservable(),
-      DisposableObservable = subclassWith({
-        isDisposed: {get: getIsDisposed},
-        dispose   : dispose
-      }, refCountObservable.constructor, constructor);
+  var DisposableObservable = subclassWith({
+    isDisposed: {get: getIsDisposed},
+    dispose   : dispose
+  }, RefCountObservable, constructor);
 
   return new DisposableObservable(source, subject);
 }
 
 module.exports = disposable;
-
-function getRefCountObservable() {
-  return (new Rx.ConnectableObservable()).refCount();
-}
 
 /**
  * Constructor for the DisposableObservable class
@@ -54,15 +50,14 @@ function constructor(source, subject) {
   /* jshint validthis:true */
   var that = this;
 
+  // default to vanilla subject
   subject = subject || new Rx.Subject();
 
-  // create the multicast instance for the RefCountObservable
-  var refCountObservable = getRefCountObservable(),
-      monitored          = source.do(undefined, setDisposed, setDisposed),
-      multicasted        = multicast.call(monitored, subject);
+  // quietly go to disposed state when the source Observable errors or completes
+  var monitored = source.do(undefined, setDisposed, setDisposed);
 
   // super()
-  refCountObservable.constructor.call(this, multicasted);
+  RefCountObservable.call(this, multicast.call(monitored, subject));
 
   // private members
   this._subject = subject;

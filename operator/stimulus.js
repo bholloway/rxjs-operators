@@ -1,7 +1,8 @@
 'use strict';
 
-var Rx        = require('rxjs'),
-    multicast = require('rxjs/operator/multicast').multicast;
+var Rx                 = require('rxjs'),
+    multicast          = require('rxjs/operator/multicast').multicast,
+    RefCountObservable = (new Rx.ConnectableObservable()).refCount().constructor;
 
 var subclassWith = require('../utility/subclass-with');
 
@@ -27,44 +28,45 @@ var subclassWith = require('../utility/subclass-with');
 function stimulus(subject) {
   /* jshint validthis:true */
 
-  // use this where available else use nothing
+  // use a degenerate observable where bound 'this' is not observable
   var source = !!this && (typeof this === 'object') && (this instanceof Rx.Observable) && this || Rx.Observable.never();
 
   // create a sub-class of RefCountObservable
   //  infer the RefCountObservable class definition by one of its instances
-  var refCountObservable = getRefCountObservable(),
-      StimulusObservable = subclassWith({
-        next    : next,
-        error   : error,
-        complete: complete
-      }, refCountObservable.constructor, constructor);
+  var StimulusObservable = subclassWith({
+    next    : next,
+    error   : error,
+    complete: complete
+  }, RefCountObservable, constructor);
 
   return new StimulusObservable(source, subject);
 }
 
 module.exports = stimulus;
 
-function getRefCountObservable() {
-  return (new Rx.ConnectableObservable()).refCount();
-}
-
 /**
  * Constructor for the DisposableObservable class
  */
 function constructor(source, subject) {
   /* jshint validthis:true */
+  var that = this;
 
+  // default to vanilla subject
   subject = subject || new Rx.Subject();
 
-  // create the multicast instance for the RefCountObservable
-  var refCountObservable = getRefCountObservable(),
-      multicasted        = multicast.call(source, subject);
+  // quietly go to disposed state when the source Observable errors or completes
+  var monitored = source.do(undefined, setDisposed, setDisposed);
 
   // super()
-  refCountObservable.constructor.call(this, multicasted);
+  RefCountObservable.call(this, multicast.call(monitored, subject));
 
   // private members
   this._subject = subject;
+  this._isDisposed = false;
+
+  function setDisposed() {
+    that._isDisposed = true;
+  }
 }
 
 /**
@@ -72,7 +74,9 @@ function constructor(source, subject) {
  */
 function next(value) {
   /* jshint validthis:true */
-  this._subject.next(value);
+  if (!this._isDisposed) {
+    this._subject.next(value);
+  }
 }
 
 /**
@@ -80,7 +84,9 @@ function next(value) {
  */
 function error(value) {
   /* jshint validthis:true */
-  this._subject.error(value);
+  if (!this._isDisposed) {
+    this._subject.error(value);
+  }
 }
 
 /**
@@ -88,5 +94,7 @@ function error(value) {
  */
 function complete() {
   /* jshint validthis:true */
-  this._subject.complete();
+  if (!this._isDisposed) {
+    this._subject.complete();
+  }
 }

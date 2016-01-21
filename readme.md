@@ -1,6 +1,6 @@
-# Rx Operators
+# RxJS Operators
 
-[![NPM](https://nodei.co/npm/rx-operators.png)](http://github.com/bholloway/rx-operators)
+[![NPM](https://nodei.co/npm/rxjs-operators.png)](http://github.com/bholloway/rxjs-operators)
 
 A library of operators for RxJS
 
@@ -9,7 +9,7 @@ A library of operators for RxJS
 In all cases this library does **not add operators to Rx.Observable**. You need to do extra work to create an Observable with these operators.
 
 You may either:
- * Use the whole package to get a hash `object` of all `rxOperators.operator.*` and `rxOperators.utility.*`.
+ * Use the whole package to get a hash `object` of all `RxJSOperators.operator.*` and `RxJSOperators.utility.*`.
  * Import individual operators from `/operator` and/or utilities from `/utility`.
 
 The operators are simply `function` that expect `this` to be the **upstream** `Observable` If they were contained within RxJS then they would be prototype functions on `Observable`. They create and return a **downstream** `Observable`.
@@ -26,8 +26,8 @@ For example:
 
 Import everthing
 ```
-var rxOperators  = require('rx-operators');
-var MyObservable = rxOperators.utility.subclassWith({
+var RxJSOperators = require('rxjs-operators');
+var MyObservable  = RxJSOperators.utility.subclassWith({
   disposable: MyObservable.operators.disposable,
   ...
 });
@@ -35,8 +35,8 @@ var MyObservable = rxOperators.utility.subclassWith({
 
 or import selectively
 ```
-var subclassWith = require('rx-operators/utility/subclass-with'),
-    disposable   = require('rx-operators/operators/disposable');
+var subclassWith = require('rxjs-operators/utility/subclass-with'),
+    disposable   = require('rxjs-operators/operators/disposable');
 	
 var MyObservable = subclassWith({
   disposable: disposable,

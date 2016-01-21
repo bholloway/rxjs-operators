@@ -1,5 +1,5 @@
 {
-  "name": "rx-operators",
+  "name": "rxjs-operators",
   "version": "0.0.1",
   "description": "A library of operators for RxJS",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bholloway/rx-operators.git"
+    "url": "git+https://github.com/bholloway/rxjs-operators.git"
   },
   "keywords": [
     "reactive",
@@ -22,9 +22,9 @@
   "author": "bholloway",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/bholloway/rx-operators/issues"
+    "url": "https://github.com/bholloway/rxjs-operators/issues"
   },
-  "homepage": "https://github.com/bholloway/rx-operators",
+  "homepage": "https://github.com/bholloway/rxjs-operators",
   "dependencies": {},
   "devDependencies": {
     "figures": "^1.4.0",

@@ -52,12 +52,13 @@ function getRefCountObservable() {
  */
 function constructor(source, subject) {
   /* jshint validthis:true */
+  var that = this;
 
   subject = subject || new Rx.Subject();
 
   // create the multicast instance for the RefCountObservable
   var refCountObservable = getRefCountObservable(),
-      monitored          = source.do(undefined, undefined, this.dispose.bind(this)),
+      monitored          = source.do(undefined, setDisposed, setDisposed),
       multicasted        = multicast.call(monitored, subject);
 
   // super()
@@ -66,6 +67,10 @@ function constructor(source, subject) {
   // private members
   this._subject = subject;
   this._isDisposed = false;
+
+  function setDisposed() {
+    that._isDisposed = true;
+  }
 }
 
 /**

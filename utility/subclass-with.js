@@ -8,7 +8,7 @@ var Observable = require('rxjs').Observable;
  * Implements instance `lift()` and static `from()` methods.
  *
  * @param {object} operators A hash of operator functions or property definitions for the prototype
- * @param {Class} [BaseClass] Optional subclass of Observable to use as the base class
+ * @param {function} [BaseClass] Optional subclass of Observable to use as the base class
  * @param {function} [constructor] Optional constructor implementation
  * @returns {function} A subclass of Observable that includes the given operators
  */
@@ -22,9 +22,7 @@ function subclassWith(operators, BaseClass, constructor) {
   }
 
   var SubClass = function SubClass() {
-    if (typeof constructor === 'function') {
-      constructor.apply(this, Array.prototype.slice.call(arguments));
-    }
+    constructor.apply(this, Array.prototype.slice.call(arguments));
   };
 
   // static methods

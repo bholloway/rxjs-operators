@@ -76,8 +76,9 @@ While `operators` values are typically `function`, they may also be a descriptor
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive the **last (or initial) value** and all subsequent notifications, unless or until the source Observable is complete.
 
+* **@this** `: Observable`
 * **@param** `[initialValue : *]` Optional value to use when invalid (default `undefined`)
-* **@returns** `: BehaviorObservable` An observable with additional `clear()` method and `isValid:boolean` field
+* **@returns** `: BehaviorObservable` A ConnectableObservable with additional `clear()` method and `isValid:boolean` fields
 
 Exposes a `clear()` method that will re-instate the `initialValue`.
 
@@ -89,7 +90,7 @@ Exposes an `isValid` flag which negates any time the current value is the `initi
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable (if given) is complete. May be explicitly completed using an exposed `dispose()` method.
 
-* **@this** : Observable|undefined
+* **@this** `: Observable|undefined`
 * **@param** `[subject : Subject]` Optional existing Subject instance, similar to `multicast()` operator
 * **@returns** `: LifecycleObservable` A RefCountObservable with additional `dispose()` method and `isComplete:boolean` field
 
@@ -111,7 +112,7 @@ This operator is more convenient in the case where where you want to terminate b
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable (if given) is complete. May be explicitly control Observable output using the exposed `next()`, `error()`, and `complete()` methods.
 
-* **@this** : Observable|undefined
+* **@this** `: Observable|undefined`
 * **@param** `[subject : Subject]` Optional existing Subject instance, similar to `multicast()` operator
 * **@returns** `: StimulusObservable` A RefCountObservable with additional `dispose()` method and `isComplete:boolean` field
 
@@ -133,7 +134,7 @@ This operator is more convenient in the case where where you want to terminate b
 
 Represents a value that changes over time. Observers can subscribe to the subject to receive all subsequent notifications, unless or until the source Observable is complete. It is possible to **observe the number of subscriptions** to the Subject.
 
-* **@this** : Observable|undefined
+* **@this** `: Observable|undefined`
 * **@param** `[subject : Subject]` Optional existing Subject instance, similar to `multicast()` operator
 * **@returns** `: LifecycleObservable` A RefCountObservable with additional `lifecycle:Observable` field
 

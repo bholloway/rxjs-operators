@@ -33,14 +33,10 @@ describe('operator.disposable', function () {
     output = observable.disposable();
   });
 
-  beforeEach(function () {
-    outputObserver = getObserver();
-  });
-
   describe('notify NEXT', function () {
 
     it('should occur when the upstream observable notifies NEXT', function () {
-      subscribeToOutput(outputObserver);
+      subscribeToOutput();
       scheduler.flush();
 
       expect(outputObserver.next).not.toHaveBeenCalled();
@@ -58,7 +54,7 @@ describe('operator.disposable', function () {
   describe('notify COMPLETE', function () {
 
     it('should occur when the upstream observable notifies COMPLETE', function () {
-      subscribeToOutput(outputObserver);
+      subscribeToOutput();
       scheduler.flush();
 
       expect(outputObserver.complete).not.toHaveBeenCalled();
@@ -73,16 +69,14 @@ describe('operator.disposable', function () {
       upstream.complete();
       scheduler.flush();
 
-      expect(outputObserver.complete).not.toHaveBeenCalled();
-
-      subscribeToOutput(outputObserver);
+      subscribeToOutput();
       scheduler.flush();
 
       expect(outputObserver.complete).toHaveBeenCalled();
     });
 
     it('should occur on explicit dispose()', function () {
-      subscribeToOutput(outputObserver);
+      subscribeToOutput();
       scheduler.flush();
 
       expect(outputObserver.complete).not.toHaveBeenCalled();
@@ -96,21 +90,17 @@ describe('operator.disposable', function () {
     afterEach(unsubscribeToOutput);
   });
 
-  function subscribeToOutput(observer) {
+  function subscribeToOutput(isDebug) {
+    outputObserver = getObserver(isDebug);
+
     outputSubscriptions.push(output
       .subscribeOn(scheduler)
-      .subscribe(
-        observer && observer.next || function () {
-        },
-        observer && observer.error || function () {
-        },
-        observer && observer.complete || function () {
-        }
-      )
+      .subscribe(outputObserver.next, outputObserver.error, outputObserver.complete)
     );
   }
 
   function unsubscribeToOutput() {
+    outputObserver = null;
     outputSubscriptions.pop()
       .unsubscribe();
   }
@@ -123,6 +113,11 @@ function getObserver(isDebug) {
         console.log('NEXT', value);
       }
     },
+    error   : function (value) {
+      if (isDebug) {
+        console.log('NEXT', value);
+      }
+    },
     complete: function () {
       if (isDebug) {
         console.log('COMPLETE');
@@ -130,6 +125,7 @@ function getObserver(isDebug) {
     }
   };
   spyOn(observer, 'next').and.callThrough();
+  spyOn(observer, 'error').and.callThrough();
   spyOn(observer, 'complete').and.callThrough();
   return observer;
 }

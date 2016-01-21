@@ -14,7 +14,8 @@ describe('operator.lifecycle', function () {
       scheduler,
       output;
 
-  var outputSubscriptions = [];
+  var outputObserver,
+      outputSubscriptions = [];
 
   beforeAll(function () {
     LifecycleObservable = subclassWith({
@@ -44,25 +45,15 @@ describe('operator.lifecycle', function () {
 
       beforeEach(newLifecycleObserver);
 
-      describe('without any downstream subscribers', function () {
-        expectSubscribers(0, 0);
-      });
+      describe('without any downstream subscribers', describeSubscribers(0, 0));
 
-      describe('with one downstream subscribe', function () {
-        expectSubscribers(0, +1);
-      });
+      describe('with one downstream subscribe', describeSubscribers(0, 1));
 
-      describe('with another downstream subscribe', function () {
-        expectSubscribers(1, +1);
-      });
+      describe('with another downstream subscribe', describeSubscribers(1, 2));
 
-      describe('with one downstream unsubscribe', function () {
-        expectSubscribers(2, -1);
-      });
+      describe('with one downstream unsubscribe', describeSubscribers(2, 1));
 
-      describe('with another downstream unsubscribe', function () {
-        expectSubscribers(1, -1);
-      });
+      describe('with another downstream unsubscribe', describeSubscribers(1, 0));
 
       afterEach(killLifecycleObserver);
     });
@@ -74,8 +65,7 @@ describe('operator.lifecycle', function () {
       beforeEach(newLifecycleObserver);
 
       it('should occur when the upstream observable notifies COMPLETE', function () {
-        var outputObserver = getObserver();
-        subscribeToOutput(outputObserver);
+        subscribeToOutput();
         scheduler.flush();
 
         upstream.complete();
@@ -89,8 +79,7 @@ describe('operator.lifecycle', function () {
         upstream.complete();
         scheduler.flush();
 
-        var outputObserver = getObserver();
-        subscribeToOutput(outputObserver);
+        subscribeToOutput();
         scheduler.flush();
 
         expect(outputObserver.complete).toHaveBeenCalled();
@@ -113,33 +102,34 @@ describe('operator.lifecycle', function () {
       lifecycleSubscription = null;
     }
 
-    function expectSubscribers(initialCount, delta) {
+    function describeSubscribers(before, after) {
+      return function () {
 
-      it('should be a Behavior insofar as it notifies NEXT initial count ' + initialCount, function () {
-        expect(lifecycleObserver.next).toHaveBeenCalledWith(initialCount);
-      });
-
-      if (delta > 0) {
-        it('should notify NEXT incremented count (to ' + (initialCount + 1) + ') after subscribe', function () {
-          subscribeToOutput();
-          scheduler.flush();
-
-          expect(lifecycleObserver.next).toHaveBeenCalledWith(initialCount + 1);
+        it('should be a Behavior insofar as it notifies NEXT initial value ' + before, function () {
+          expect(lifecycleObserver.next).toHaveBeenCalledWith(before);
         });
-      }
-      else if (delta < 0) {
-        it('should notify NEXT decremented count (to ' + (initialCount - 1) + ') after unsubscribe', function () {
-          unsubscribeToOutput();
-          scheduler.flush();
 
-          expect(lifecycleObserver.next).toHaveBeenCalledWith(initialCount - 1);
-        });
-      }
+        if (after > before) {
+          it('should notify NEXT with value ' + after + ' after subscribe', function assertions() {
+            subscribeToOutput();
+            scheduler.flush();
+
+            expect(lifecycleObserver.next).toHaveBeenCalledWith(after);
+          });
+        }
+        else if (after < before) {
+          it('should notify NEXT with value ' + after + ' after unsubscribe', function assertions() {
+            unsubscribeToOutput();
+            scheduler.flush();
+
+            expect(lifecycleObserver.next).toHaveBeenCalledWith(after);
+          });
+        }
+      };
     }
   });
 
   describe('downstream observable', function () {
-    var outputObserver;
 
     beforeAll(newInstance);
 
@@ -154,7 +144,7 @@ describe('operator.lifecycle', function () {
     describe('notify NEXT', function () {
 
       it('should occur when the upstream observable notifies NEXT', function () {
-        subscribeToOutput(outputObserver);
+        subscribeToOutput();
         scheduler.flush();
 
         expect(outputObserver.next).not.toHaveBeenCalled();
@@ -174,7 +164,7 @@ describe('operator.lifecycle', function () {
       beforeEach(newInstance);
 
       it('should occur when the upstream observable notifies COMPLETE', function () {
-        subscribeToOutput(outputObserver);
+        subscribeToOutput();
         scheduler.flush();
 
         expect(outputObserver.complete).not.toHaveBeenCalled();
@@ -191,7 +181,7 @@ describe('operator.lifecycle', function () {
 
         expect(outputObserver.complete).not.toHaveBeenCalled();
 
-        subscribeToOutput(outputObserver);
+        subscribeToOutput();
         scheduler.flush();
 
         expect(outputObserver.complete).toHaveBeenCalled();
@@ -208,21 +198,17 @@ describe('operator.lifecycle', function () {
     output = observable.lifecycle();
   }
 
-  function subscribeToOutput(observer) {
+  function subscribeToOutput(isDebug) {
+    outputObserver = getObserver(isDebug);
+
     outputSubscriptions.push(output
       .subscribeOn(scheduler)
-      .subscribe(
-        observer && observer.next || function () {
-        },
-        observer && observer.error || function () {
-        },
-        observer && observer.complete || function () {
-        }
-      )
+      .subscribe(outputObserver.next, outputObserver.error, outputObserver.complete)
     );
   }
 
   function unsubscribeToOutput() {
+    outputObserver = null;
     outputSubscriptions.pop()
       .unsubscribe();
   }
@@ -235,6 +221,11 @@ function getObserver(isDebug) {
         console.log('NEXT', value);
       }
     },
+    error   : function (value) {
+      if (isDebug) {
+        console.log('NEXT', value);
+      }
+    },
     complete: function () {
       if (isDebug) {
         console.log('COMPLETE');
@@ -242,12 +233,13 @@ function getObserver(isDebug) {
     }
   };
   spyOn(observer, 'next').and.callThrough();
+  spyOn(observer, 'error').and.callThrough();
   spyOn(observer, 'complete').and.callThrough();
   return observer;
 }
 
 function constructorName(instance) {
   var analysis = !!instance && (typeof instance === 'object') && (typeof instance.constructor === 'function') &&
-        Function.prototype.toString.call(instance.constructor).match(/function\s+(\w+)/);
+    Function.prototype.toString.call(instance.constructor).match(/function\s+(\w+)/);
   return analysis ? analysis[1] : null;
 }

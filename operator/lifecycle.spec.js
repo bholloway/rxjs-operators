@@ -43,7 +43,7 @@ describe('operator.lifecycle', function () {
 
     describe('notify NEXT', function () {
 
-      beforeEach(newLifecycleObserver);
+      beforeEach(subscribeToLifestyle);
 
       describe('without any downstream subscribers', describeSubscribers(0, 0));
 
@@ -55,18 +55,17 @@ describe('operator.lifecycle', function () {
 
       describe('with another downstream unsubscribe', describeSubscribers(1, 0));
 
-      afterEach(killLifecycleObserver);
+      afterEach(unusbscribeToLifestyle);
     });
 
     describe('notify COMPLETE', function () {
 
       beforeEach(newInstance);
 
-      beforeEach(newLifecycleObserver);
+      beforeEach(subscribeToLifestyle);
 
       it('should occur when the upstream observable notifies COMPLETE', function () {
         subscribeToOutput();
-        scheduler.flush();
 
         upstream.complete();
         scheduler.flush();
@@ -80,24 +79,26 @@ describe('operator.lifecycle', function () {
         scheduler.flush();
 
         subscribeToOutput();
-        scheduler.flush();
 
         expect(outputObserver.complete).toHaveBeenCalled();
         expect(lifecycleObserver.complete).toHaveBeenCalled();
       });
 
-      afterEach(killLifecycleObserver);
+      afterEach(unusbscribeToLifestyle);
     });
 
-    function newLifecycleObserver() {
+    function subscribeToLifestyle() {
       lifecycleObserver = getObserver();
+
       lifecycleSubscription = output.lifecycle
         .subscribeOn(scheduler)
         .subscribe(lifecycleObserver.next, undefined, lifecycleObserver.complete);
+
       scheduler.flush();
     }
 
-    function killLifecycleObserver() {
+    function unusbscribeToLifestyle() {
+      lifecycleObserver = null;
       lifecycleSubscription.unsubscribe();
       lifecycleSubscription = null;
     }
@@ -112,7 +113,6 @@ describe('operator.lifecycle', function () {
         if (after > before) {
           it('should notify NEXT with value ' + after + ' after subscribe', function assertions() {
             subscribeToOutput();
-            scheduler.flush();
 
             expect(lifecycleObserver.next).toHaveBeenCalledWith(after);
           });
@@ -120,7 +120,6 @@ describe('operator.lifecycle', function () {
         else if (after < before) {
           it('should notify NEXT with value ' + after + ' after unsubscribe', function assertions() {
             unsubscribeToOutput();
-            scheduler.flush();
 
             expect(lifecycleObserver.next).toHaveBeenCalledWith(after);
           });
@@ -145,7 +144,6 @@ describe('operator.lifecycle', function () {
 
       it('should occur when the upstream observable notifies NEXT', function () {
         subscribeToOutput();
-        scheduler.flush();
 
         expect(outputObserver.next).not.toHaveBeenCalled();
 
@@ -165,7 +163,6 @@ describe('operator.lifecycle', function () {
 
       it('should occur when the upstream observable notifies COMPLETE', function () {
         subscribeToOutput();
-        scheduler.flush();
 
         expect(outputObserver.complete).not.toHaveBeenCalled();
 
@@ -182,7 +179,6 @@ describe('operator.lifecycle', function () {
         expect(outputObserver.complete).not.toHaveBeenCalled();
 
         subscribeToOutput();
-        scheduler.flush();
 
         expect(outputObserver.complete).toHaveBeenCalled();
       });
@@ -205,6 +201,8 @@ describe('operator.lifecycle', function () {
       .subscribeOn(scheduler)
       .subscribe(outputObserver.next, outputObserver.error, outputObserver.complete)
     );
+
+    scheduler.flush();
   }
 
   function unsubscribeToOutput() {

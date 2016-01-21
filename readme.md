@@ -78,7 +78,7 @@ Represents a value that changes over time. Observers can subscribe to the subjec
 
 * **@this** `: Observable`
 * **@param** `[initialValue : *]` Optional value to use when invalid (default `undefined`)
-* **@returns** `: BehaviorObservable` A RefCountObservable with additional `clear()` method and `isValid:boolean` fields
+* **@returns** `: BehaviorObservable` A RefCountObservable with additional `clear()` method, and `isValid:boolean` and `value:*` fields
 
 Exposes a `clear()` method that will re-instate the `initialValue`.
 

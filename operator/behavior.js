@@ -16,7 +16,8 @@ var subclassWith = require('../utility/subclass-with');
  *
  * @this {Observable}
  * @param {*} [initialValue] Optional value to use when invalid (default `undefined`)
- * @returns {BehaviorObservable} A RefCountObservable with additional `clear()` method and `isValid:boolean` fields
+ * @returns {BehaviorObservable} A RefCountObservable with additional `clear()` method, and `isValid:boolean` and
+ * `value:*` fields
  */
 function behavior(initialValue) {
   /* jshint validthis:true */

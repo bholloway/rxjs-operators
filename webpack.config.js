@@ -6,7 +6,7 @@ module.exports = {
   output   : {
     path         : './dist',
     filename     : 'index.js',
-    library      : 'rxOperators',
+    library      : 'RxOperators',
     libraryTarget: 'umd'
   },
   resolve  : {

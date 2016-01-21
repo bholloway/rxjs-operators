@@ -9,7 +9,7 @@ A library of operators for RxJS
 In all cases this library does **not add operators to Rx.Observable**. You need to do extra work to create an Observable with these operators.
 
 You may either:
- * Use the whole package to get a hash `object` of all `RxJSOperators.operator.*` and `RxJSOperators.utility.*`.
+ * Use the whole package to get a hash `object` of all `RxOperators.operator.*` and `RxOperators.utility.*`.
  * Import individual operators from `/operator` and/or utilities from `/utility`.
 
 The operators are simply `function` that expect `this` to be the **upstream** `Observable` If they were contained within RxJS then they would be prototype functions on `Observable`. They create and return a **downstream** `Observable`.
@@ -26,8 +26,8 @@ For example:
 
 Import everthing
 ```
-var RxJSOperators = require('rxjs-operators');
-var MyObservable  = RxJSOperators.utility.subclassWith({
+var RxOperators  = require('rxjs-operators');
+var MyObservable = RxOperators.utility.subclassWith({
   disposable: MyObservable.operators.disposable,
   ...
 });

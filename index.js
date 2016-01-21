@@ -9,9 +9,9 @@ module.exports = {
     subclassWith: require('./utility/subclass-with')
   },
   operator: {
-    behavior    : require('./operator/behavior'),
-    disposable  : require('./operator/disposable'),
-    lifecycle   : require('./operator/lifecycle'),
-    toObservable: require('./operator/to-observable')
+    behavior  : require('./operator/behavior'),
+    disposable: require('./operator/disposable'),
+    lifecycle : require('./operator/lifecycle'),
+    stimulus  : require('./operator/stimulus')
   }
 };
